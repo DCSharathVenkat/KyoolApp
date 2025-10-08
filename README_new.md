@@ -13,11 +13,20 @@ KyoolApp/
 │   │   └── assets/       # Images and static files
 │   ├── package.json
 │   └── App.tsx
+├── backend/           # FastAPI Python backend
+│   ├── app/
+│   │   ├── main.py       # FastAPI main app
+│   │   ├── api/          # API routes
+│   │   ├── models/       # Data models
+│   │   └── services/     # Business logic
+│   ├── requirements.txt
+│   └── Dockerfile
 └── README.md
 ```
 
 ## 📱 Tech Stack
 
+**Frontend (React Native)**
 - **Framework**: React Native with Expo SDK 54
 - **Navigation**: React Navigation 6
 - **UI Components**: React Native Elements, React Native Paper
@@ -27,10 +36,17 @@ KyoolApp/
 - **Authentication**: Firebase Auth
 - **Language**: TypeScript
 
+**Backend (Python)**
+- **Framework**: FastAPI
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Admin SDK
+- **API Documentation**: Auto-generated with Swagger/OpenAPI
+
 ## 🚀 Prerequisites
 
 Before running this app, make sure you have the following installed:
 
+### For Frontend (React Native):
 - **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
 - **npm** or **yarn** package manager
 - **Expo CLI** (global installation):
@@ -43,6 +59,10 @@ Before running this app, make sure you have the following installed:
 - OR **Android Studio** for Android emulator
 - OR **Xcode** for iOS simulator (macOS only)
 
+### For Backend (Python):
+- **Python 3.8+** - [Download here](https://python.org/downloads/)
+- **pip** package manager (comes with Python)
+
 ## 🛠️ Installation & Setup
 
 ### 1. Clone the Repository
@@ -52,7 +72,7 @@ git clone https://github.com/DCSharathVenkat/KyoolApp.git
 cd KyoolApp
 ```
 
-### 2. Install Dependencies
+### 2. Frontend Setup (React Native)
 
 ```bash
 # Navigate to frontend directory
@@ -65,9 +85,58 @@ npm install
 npx expo install --fix
 ```
 
-## 🏃‍♂️ Running the App
+### 3. Backend Setup (FastAPI)
 
-### Start the Development Server
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment (recommended)
+python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 4. Firebase Configuration
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication and Firestore Database
+3. Download the Firebase configuration files:
+   - For frontend: `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
+   - For backend: Service account key JSON file
+4. Place the configuration files in the appropriate directories
+
+## 🏃‍♂️ Running the Application
+
+### Start the Backend Server
+
+```bash
+# From the backend directory
+cd backend
+
+# Activate virtual environment (if not already active)
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # macOS/Linux
+
+# Start the FastAPI server
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The backend will be available at:
+- **API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Alternative docs**: http://localhost:8000/redoc
+
+### Start the Frontend App
+
+Open a new terminal window:
 
 ```bash
 # From the frontend directory
@@ -96,7 +165,7 @@ npm run ios
 npm run web
 ```
 
-### Alternative Commands
+### Alternative Frontend Commands
 
 ```bash
 # Start with tunnel (for network issues)
@@ -150,38 +219,44 @@ npm install
 npx expo start --tunnel
 ```
 
-**4. Package version warnings:**
-```bash
-# Fix package versions
-npx expo install --fix
-```
+**4. Backend connection issues:**
+- Ensure backend is running on port 8000
+- Check firewall settings
+- Verify API URL in frontend configuration
+
+**5. Firebase authentication issues:**
+- Verify Firebase configuration files are in place
+- Check Firebase project settings
+- Ensure proper API keys are configured
 
 ### Development Tips:
 
 - **Hot Reload**: Code changes will automatically reload the app
 - **Debug Mode**: Shake your device or press `d` in terminal to open debug menu
 - **Logs**: View logs in terminal or Expo DevTools
-- **Network**: Your device must be on the same network as your development machine (or use tunnel mode)
+- **Network**: Both backend and frontend must be accessible from your device
 
-## 🔧 Available Scripts
+## 🔧 Environment Variables
 
-```bash
-npm start          # Start development server with tunnel
-npm run start-local    # Start development server locally
-npm run start-tunnel   # Start development server with tunnel
-npm run android        # Run on Android device/emulator
-npm run ios           # Run on iOS device/simulator
-npm run web           # Run in web browser
+Create appropriate environment files:
+
+**Frontend (.env):**
+```
+EXPO_PUBLIC_API_URL=http://localhost:8000
+EXPO_PUBLIC_FIREBASE_CONFIG=your_firebase_config
 ```
 
-## 🎯 Quick Start
+**Backend (.env):**
+```
+FIREBASE_SERVICE_ACCOUNT_KEY=path_to_service_account.json
+DATABASE_URL=your_database_url
+```
 
-1. **Install Node.js** and **Expo CLI**
-2. **Clone** the repository: `git clone https://github.com/DCSharathVenkat/KyoolApp.git`
-3. **Navigate** to frontend: `cd KyoolApp/frontend`
-4. **Install** dependencies: `npm install`
-5. **Start** the app: `npm start`
-6. **Scan QR code** with Expo Go app on your phone
+## 📝 API Documentation
+
+Once the backend is running, you can explore the API at:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
 ## 🤝 Contributing
 
@@ -190,6 +265,10 @@ npm run web           # Run in web browser
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 
