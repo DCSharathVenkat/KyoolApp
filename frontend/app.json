@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "KyoolApp",
+    "slug": "kyoolapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "kyoolapp",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#667eea"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kyoolapp.executive"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#667eea"
+      },
+      "package": "com.kyoolapp.executive"
+    },
+    "web": {
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

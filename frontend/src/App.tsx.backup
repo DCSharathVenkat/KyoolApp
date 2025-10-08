@@ -1,0 +1,783 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import { getUserByEmail } from "./api/user_api";
+
+// PUBLIC landing (from old App.tsx needs these)
+import { Button } from "./components/ui/button";
+import { Card } from "./components/ui/card";
+import { WaitlistDialog } from "./components/WaitlistDialog";
+import { AnimatedStatsSection } from "./components/AnimatedStatsSection";
+import { FeatureCard } from "./components/FeatureCard";
+import {
+  Target,
+  Clock,
+  TrendingUp,
+  Users,
+  ChevronRight,
+  Sparkles,
+  Shield,
+  Star,
+  CheckCircle,
+} from "lucide-react";
+import { ImageWithFallback } from "./components/figma/ImageWithFallback";
+import { Toaster } from "./components/ui/sonner";
+
+// Auth + main pages
+// (Kept your existing pages; we’ll use LoginPage/SignUpPage and your real Dashboard)
+import SignUpPage from "./components/SignUpPage";
+import { LoginPage } from "./components/LoginPage";
+import { Header } from "./components/Header";
+import { Sidebar } from "./components/Sidebar";
+import { Dashboard } from "./components/Dashboard";
+import { HealthMetrics } from "./components/HealthMetrics";
+import { WaterTracker } from "./components/WaterTracker";
+import { RecipeSearch } from "./components/RecipeSearch";
+import { Profile } from "./components/Profile";
+import { FitnessTracker } from "./components/FitnessTracker";
+import { DeviceConnections } from "./components/DeviceConnections";
+import { FeaturesShowcase } from "./components/FeaturesShowcase";
+
+import { auth } from "./firebase";
+
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return <AppRoutes />;
+}
+
+function AppRoutes() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAppUser, setIsAppUser] = useState(true); // true by default for non-auth
+  const [activeTab, setActiveTab] = useState("activity");
+  const [user, setUser] = useState<any>(null);
+  const [safeZone, setSafeZone] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false); // needed by Home
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ===== Home (Landing) from old App.tsx =====
+  const features = [
+    {
+      icon: Target,
+      title: "Executive-Focused",
+      description: "Designed specifically for busy leaders and decision-makers",
+      benefit: "Tailored to C-suite demands and executive lifestyles",
+      colorScheme: "blue",
+    },
+    {
+      icon: Clock,
+      title: "Time-Efficient",
+      description: "Solutions that work around your schedule, not against it",
+      benefit: "5-minute routines that deliver noticeable results",
+      colorScheme: "green",
+    },
+    {
+      icon: TrendingUp,
+      title: "Performance-Driven",
+      description: "Boost your energy, focus, and leadership impact",
+      benefit: "Measurable improvements in decision-making and productivity",
+      colorScheme: "purple",
+    },
+    {
+      icon: Users,
+      title: "Specialized Support",
+      description: "Practical insights shaped by real executive challenges",
+      benefit: "Access to early executive community insights & resources",
+      colorScheme: "orange",
+    },
+  ];
+
+  const stats = [
+    {
+      icon: "⚖️",
+      number: "78%",
+      label: "of executives struggle with work-life balance",
+      backgroundColor: "bg-red-50 dark:bg-red-950/20",
+    },
+    {
+      icon: "⚡",
+      number: "65%",
+      label: "face chronic stress and burnout daily",
+      backgroundColor: "bg-orange-50 dark:bg-orange-950/20",
+    },
+    {
+      icon: "🍽️",
+      number: "52%",
+      label: "regularly skip meals due to meetings",
+      backgroundColor: "bg-blue-50 dark:bg-blue-950/20",
+    },
+    {
+      icon: "⏳",
+      number: "43%",
+      label: "average less than 6 hours of sleep",
+      backgroundColor: "bg-purple-50 dark:bg-purple-950/20",
+    },
+  ];
+
+  const Home = () => (
+    <View>
+      {/* Hero Section */}
+      <View>
+        <View>
+          <ImageWithFallback
+            src="https://images.unsplash.com/photo-1551890299-1bc7ea6f0054?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW5yaXNlJTIwbW91bnRhaW4lMjBzdWNjZXNzfGVufDF8fHx8MTc1ODU1MjEwMnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+            alt="Sunrise over mountain peak"
+           
+            loading="eager"
+          />
+          <View />
+          <View />
+        </View>
+        
+        {/* Floating elements - reduced for performance */}
+        <View />
+        <View />
+        <View />
+        
+        <View>
+          <View>
+            <View>
+              <Sparkles />
+              <Text>Coming Soon • Limited Early Access</Text>
+            </View>
+            
+            <h1>
+  <Text>Your Health.</Text>
+  <Text>Your Success.</Text>
+  <Text>
+    Simplified.
+  </Text>
+</h1>
+
+
+            <Text>
+              The first lifestyle app designed exclusively for executives who
+              refuse to compromise their health for success.
+            </Text>
+
+            <Text>
+              Transform your wellbeing without sacrificing your career.
+            </Text>
+
+            <View>
+              <Text>
+                ⚡ Spots are limited • Join 237 executives on the waitlist
+              </Text>
+            </View>
+
+            <View>
+              <TouchableOpacity
+                size="lg"
+                onPress={() => setWaitlistOpen(true)}
+               
+              >
+                Get Early Access
+                <ChevronRight />
+              </TouchableOpacity>
+              <Link to="/login">
+                <TouchableOpacity
+                  size="lg"
+                 
+                >
+                  Get Started
+                </TouchableOpacity>
+              </Link>
+            </View>
+
+            <Text>
+              No spam, ever. Unsubscribe anytime.
+            </Text>
+          </View>
+        </View>
+
+        {/* Scroll indicator */}
+        <View>
+          <View>
+            <View />
+          </View>
+        </View>
+      </View>
+
+      {/* Problem Statement */}
+      <View>
+        <View>
+          <View />
+          <View />
+        </View>
+
+        <View>
+          <View>
+            <View>
+              <Text />
+              Critical Health Data
+            </View>
+            <h2>
+              The Executive Health Crisis is Real
+            </h2>
+            <Text>
+              Corporate success shouldn't come at the cost of your health. The
+              data reveals a troubling reality about executive wellness that
+              demands immediate attention.
+            </Text>
+          </View>
+
+          <AnimatedStatsSection stats={stats} />
+
+          <View>
+            <View>
+              <Text>
+                It doesn't have to be this way.
+              </Text>
+              <Text>
+                KA is designed to break this cycle and restore balance to
+                executive life.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Solution Preview */}
+      <View>
+        <View>
+          <View />
+          <View />
+          <View />
+        </View>
+
+        <View>
+          <View>
+            <View>
+              <Target />
+              Our Approach
+            </View>
+            <h2>
+              Built for Your Reality
+            </h2>
+            <Text>
+              KA understands the unique challenges of executive life. We create
+              health solutions that adapt to your schedule — not the other way
+              around.
+            </Text>
+          </View>
+
+          <View>
+            {features.map((feature, index) => (
+              <FeatureCard
+                key={index}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                benefit={feature.benefit}
+                colorScheme={feature.colorScheme}
+              />
+            ))}
+          </View>
+
+          <View>
+            <View>
+              <Text>
+                Every feature designed with executive schedules in mind
+              </Text>
+              <Text>
+                No generic fitness apps. No one-size-fits-all solutions.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* What You'll Get */}
+      <View>
+        <View>
+          <View />
+          <View />
+        </View>
+
+        <View>
+          <View>
+            <View>
+              <Sparkles />
+              Features Preview
+            </View>
+            <h2>
+              What You'll Get
+            </h2>
+            <Text>
+              Skip the guesswork: Get tailored routines that adapt to your
+              schedule and executive lifestyle.
+            </Text>
+          </View>
+
+          <View>
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <Clock />
+                </View>
+                <h3>Smart Scheduling</h3>
+                <Text>
+                  Health routines that adapt to your calendar, travel, and work
+                  demands
+                </Text>
+                <View>
+                  <Text>Example:</Text> 7am flight? Get
+                  a 5-minute pre-travel energy routine
+                </View>
+              </View>
+            </Card>
+
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <Target />
+                </View>
+                <h3>Executive Nutrition</h3>
+                <Text>
+                  Meal strategies for business dinners, airport food, and
+                  late-night work sessions
+                </Text>
+                <View>
+                  <Text>Example:</Text> Best choices at
+                  common airport chains and hotel restaurants
+                </View>
+              </View>
+            </Card>
+
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <TrendingUp />
+                </View>
+                <h3>Performance Metrics</h3>
+                <Text>
+                  Track how health improvements translate to better
+                  decision-making and leadership
+                </Text>
+                <View>
+                  <Text>Example:</Text> Energy levels
+                  vs. quarterly performance correlation
+                </View>
+              </View>
+            </Card>
+          </View>
+
+          <View>
+            <Text>
+              Everything designed around your executive reality
+            </Text>
+            <Text>
+              No generic advice. No unrealistic expectations. Just practical
+              solutions that work within the constraints of executive life.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Social Proof */}
+      <View>
+        <View>
+          <View />
+          <View />
+        </View>
+
+        <View>
+          <View>
+            <View>
+              <Shield />
+              Trust & Credibility
+            </View>
+            <h2>
+              Built by Executives, for Executives
+            </h2>
+            <Text>
+              Every feature is shaped by real executive challenges and validated
+              by leaders who understand your world.
+            </Text>
+          </View>
+
+          <View>
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <Shield />
+                </View>
+                <h3>Designed for Executives</h3>
+                <Text>
+                  Created specifically for leaders and high performers balancing
+                  demanding careers and health goals.
+                </Text>
+              </View>
+            </Card>
+
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <Star />
+                </View>
+                <h3>Data-Informed</h3>
+                <Text>
+                  Built using insights from executive routines, productivity
+                  research, and real-world health challenges.
+                </Text>
+              </View>
+            </Card>
+
+            <Card>
+              <View />
+              <View>
+                <View>
+                  <CheckCircle />
+                </View>
+                <h3>Early Access Community</h3>
+                <Text>
+                  Shaped by feedback from our first group of executives who are
+                  guiding the KA experience.
+                </Text>
+              </View>
+            </Card>
+          </View>
+
+          <View>
+            <View>
+              <View>237+</View>
+              <Text>Executives on waitlist</Text>
+            </View>
+            <View>
+              <View>C-Suite</View>
+              <Text>Target demographic</Text>
+            </View>
+            <View>
+              <View>2025</View>
+              <Text>Early access launch</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Minimalist Waitlist Section */}
+      <View>
+        <View>
+          <View />
+          <View />
+          <View />
+        </View>
+
+        <View />
+        <View />
+        <View />
+
+        <View>
+          <View>
+            <h2>
+              Your Health. Your Edge.
+            </h2>
+
+            <View>
+              <View />
+              <Text>
+                237 executives already on the waitlist
+              </Text>
+            </View>
+          </View>
+
+          <View>
+            <View>
+              <CheckCircle />
+              <Text>Priority Coaching Access</Text>
+            </View>
+            <View>
+              <CheckCircle />
+              <Text>1-Month Free Trial</Text>
+            </View>
+            <View>
+              <CheckCircle />
+              <Text>Lifetime Discount</Text>
+            </View>
+          </View>
+
+          <View>
+            <Text>
+              Limited spots available for early access
+            </Text>
+            <Text>
+              Be among the first to experience KA before public launch
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View>
+        <View>
+          <View>
+            <View>
+              <Text>KA</Text>
+            </View>
+            <h3>
+              Executive Lifestyle Transformation
+            </h3>
+            <Text>
+              Designed for leaders who demand excellence in all areas of life.
+            </Text>
+          </View>
+
+          <View>
+            <View>
+              <h4>Product</h4>
+              <ul>
+                <li>Features</li>
+                <li>Pricing</li>
+                <li>Early Access</li>
+              </ul>
+            </View>
+            <View>
+              <h4>Company</h4>
+              <ul>
+                <li>About</li>
+                <li>Privacy</li>
+                <li>Terms</li>
+              </ul>
+            </View>
+            <View>
+              <h4>Support</h4>
+              <ul>
+                <li>Help Center</li>
+                <li>Contact</li>
+                <li>Community</li>
+              </ul>
+            </View>
+          </View>
+
+          <View>
+            <Text>© 2025 KA. All rights reserved.</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Modal + Toaster */}
+      <WaitlistDialog open={waitlistOpen} onOpenChange={setWaitlistOpen} />
+      <Toaster position="top-right" />
+    </View>
+  );
+
+  // ===== keep your tab sync logic =====
+  useEffect(() => {
+    switch (location.pathname) {
+      case "/dashboard":
+        setActiveTab("activity");
+        break;
+      case "/features":
+        setActiveTab("features");
+        break;
+      case "/health":
+        setActiveTab("health");
+        break;
+      case "/water":
+        setActiveTab("water");
+        break;
+      case "/recipes":
+        setActiveTab("recipes");
+        break;
+      case "/fitness":
+        setActiveTab("fitness");
+        break;
+      case "/devices":
+        setActiveTab("devices");
+        break;
+      case "/profile":
+        setActiveTab("profile");
+        break;
+      default:
+        setActiveTab("");
+    }
+  }, [location.pathname]);
+
+  // After login + backend check, go to dashboard if on /, /login, or /signup
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      isAppUser &&
+      ["/", "/login", "/signup"].includes(location.pathname)
+    ) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isAppUser, location.pathname, navigate]);
+
+  // Firebase auth listener + backend user check
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (u) => {
+      if (u) {
+        setIsAuthenticated(true);
+        setUser({
+          id: u.uid,
+          name: u.displayName,
+          email: u.email,
+          avatar: u.photoURL,
+        });
+        try {
+          const res = await fetch(
+            `${BASE_URL}/users/by-email/${encodeURIComponent(
+              u.email ?? ""
+            )}`
+          );
+          if (res.ok) {
+            const userData = await res.json();
+            setIsAppUser(true);
+            setUser({
+              ...userData,
+              id: userData.id || userData.userId || userData.uid || u.uid,
+              avatar: userData.avatar || u.photoURL,
+              photoURL: u.photoURL,
+            });
+          } else {
+            setIsAppUser(false);
+            setUser(null);
+          }
+        } catch {
+          setIsAppUser(false);
+          setUser(null);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsAppUser(true);
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate("/"); // back to landing
+  };
+
+  // Protected wrapper
+  function PrivateRoute({ children }: { children: React.ReactNode }) {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+    if (!isAppUser) {
+      return <Navigate to="/signup" replace />;
+    }
+    return (
+      <>
+        <View
+          user={user}
+          activeTab={activeTab}
+          safeZone={safeZone}
+          setSafeZone={setSafeZone}
+        />
+        <View>
+          <Sidebar user={user} onLogout={handleLogout} />
+          <View>
+            <View>
+              <View>{children}</View>
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  }
+
+  return (
+    <View>
+  <Routes>
+        {/* Public routes — "/" now uses the imported Home from old App.tsx */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+
+        {/* Private routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard user={user} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/features"
+          element={
+            <PrivateRoute>
+              <FeaturesShowcase user={user} onFeatureSelect={setActiveTab} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/health"
+          element={
+            <PrivateRoute>
+              <HealthMetrics user={user} setUser={setUser} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/water"
+          element={
+            <PrivateRoute>
+              <WaterTracker />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/recipes"
+          element={
+            <PrivateRoute>
+              <RecipeSearch user={user} safeZone={safeZone} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/fitness"
+          element={
+            <PrivateRoute>
+              <FitnessTracker />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/devices"
+          element={
+            <PrivateRoute>
+              <DeviceConnections />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/search"
+          element={
+            <PrivateRoute>
+              <UserSearch />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile user={user} setUser={setUser} />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </View>
+  );
+}
