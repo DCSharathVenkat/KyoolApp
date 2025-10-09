@@ -1,6 +1,6 @@
 // AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
 // Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, TextInput, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -8,24 +8,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  Phone, 
-  Mail, 
-  Calendar, 
-  Video, 
-  Award,
-  Users,
-  Filter,
-  Search,
-  Heart,
-  CheckCircle,
-  DollarSign,
-  Globe,
-  MessageSquare
-} from 'lucide-react';
+import { Ionicons } from '@expo/vector-icons';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface FindDieticianProps {
@@ -199,12 +182,12 @@ export function FindDietician({ user }: FindDieticianProps) {
           <View>
             <View>
               <View>
-                <h3>{dietician.name}</h3>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{dietician.name}</Text>
                 <Text>{dietician.title}</Text>
               </View>
               <View>
-                <TouchableOpacity variant="ghost" size="sm">
-                  <Heart />
+                <TouchableOpacity>
+                  <Ionicons name="heart-outline" size={16} color="#666" />
                 </TouchableOpacity>
                 {dietician.isOnline && (
                   <Badge variant="secondary">
@@ -216,19 +199,19 @@ export function FindDietician({ user }: FindDieticianProps) {
             
             <View>
               <View>
-                <Star />
+                <Ionicons name="star" size={16} color="#FFA500" />
                 <Text>{dietician.rating}</Text>
                 <Text>({dietician.reviewCount} reviews)</Text>
               </View>
               <View>
-                <Award />
+                <Ionicons name="trophy" size={16} color="#666" />
                 <Text>{dietician.experience}</Text>
               </View>
             </View>
             
             <View>
               <View>
-                <MapPin />
+                <Ionicons name="location-outline" size={16} color="#666" />
                 <Text>{dietician.location}</Text>
                 <Text>• {dietician.distance}</Text>
               </View>
@@ -251,12 +234,12 @@ export function FindDietician({ user }: FindDieticianProps) {
           <View>
             <View>
               <View>
-                <DollarSign />
+                <Ionicons name="cash-outline" size={16} color="#666" />
                 <Text>${dietician.consultationFee}</Text>
                 <Text>per session</Text>
               </View>
               <View>
-                <Clock />
+                <Ionicons name="time-outline" size={16} color="#666" />
                 <Text>{dietician.nextSlot}</Text>
               </View>
             </View>
@@ -265,17 +248,17 @@ export function FindDietician({ user }: FindDieticianProps) {
         
         <View>
           <TouchableOpacity>
-            <Calendar />
+            <Ionicons name="calendar-outline" size={16} color="#fff" />
             Book Appointment
           </TouchableOpacity>
           {dietician.isOnline && (
-            <TouchableOpacity variant="outline">
-              <Video />
+            <TouchableOpacity>
+              <Ionicons name="videocam-outline" size={16} color="#666" />
               Video Call
             </TouchableOpacity>
           )}
-          <TouchableOpacity variant="outline" size="icon">
-            <MessageSquare />
+          <TouchableOpacity>
+            <Ionicons name="chatbubble-outline" size={16} color="#666" />
           </TouchableOpacity>
         </View>
       </CardContent>
@@ -287,13 +270,13 @@ export function FindDietician({ user }: FindDieticianProps) {
       <CardContent>
         <View>
           <View>
-            <Globe />
+            <Ionicons name="globe-outline" size={16} color="#666" />
           </View>
           
           <View>
             <View>
               <View>
-                <h3>{recommendation.name}</h3>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{recommendation.name}</Text>
                 <Text>{recommendation.type}</Text>
               </View>
               <Badge variant="outline">{recommendation.specialty}</Badge>
@@ -301,11 +284,11 @@ export function FindDietician({ user }: FindDieticianProps) {
             
             <View>
               <View>
-                <Star />
+                <Ionicons name="star" size={16} color="#FFA500" />
                 <Text>{recommendation.rating}</Text>
               </View>
               <View>
-                <Users />
+                <Ionicons name="people-outline" size={16} color="#666" />
                 <Text>{recommendation.users} users</Text>
               </View>
             </View>
@@ -319,7 +302,7 @@ export function FindDietician({ user }: FindDieticianProps) {
           <View>
             {recommendation.features.map((feature: string, index: number) => (
               <Badge key={index} variant="secondary">
-                <CheckCircle />
+                <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                 {feature}
               </Badge>
             ))}
@@ -328,7 +311,7 @@ export function FindDietician({ user }: FindDieticianProps) {
         
         <View>
           <View>
-            <DollarSign />
+            <Ionicons name="cash-outline" size={16} color="#666" />
             <Text>{recommendation.price}</Text>
           </View>
           <TouchableOpacity>
@@ -342,7 +325,7 @@ export function FindDietician({ user }: FindDieticianProps) {
   return (
     <View>
       <View>
-        <h2>Find Nutrition Experts</h2>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#333', textAlign: 'center' }}>Find Nutrition Experts</Text>
         <Text>
           Connect with certified dieticians and nutritionists for personalized guidance
         </Text>
@@ -360,21 +343,21 @@ export function FindDietician({ user }: FindDieticianProps) {
             <CardContent>
               <View>
                 <View>
-                  <Search />
+                  <Ionicons name="search" size={16} color="#666" />
                   <TextInput
                     placeholder="Search by name or specialty..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChangeText={setSearchQuery}
                    
                   />
                 </View>
                 
                 <View>
-                  <MapPin />
+                  <Ionicons name="location-outline" size={16} color="#666" />
                   <TextInput
                     placeholder="Enter your location..."
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    onChangeText={setLocation}
                    
                   />
                 </View>
@@ -409,11 +392,11 @@ export function FindDietician({ user }: FindDieticianProps) {
           {/* Results */}
           <View>
             <View>
-              <h3>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
                 {filteredDieticians.length} Dieticians Found
-              </h3>
+              </Text>
               <View>
-                <Filter />
+                <Ionicons name="filter-outline" size={16} color="#666" />
                 <Text>Sort by: Distance</Text>
               </View>
             </View>
@@ -428,7 +411,7 @@ export function FindDietician({ user }: FindDieticianProps) {
 
         <TabsContent value="online">
           <View>
-            <h3>Recommended Online Platforms</h3>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Recommended Online Platforms</Text>
             <View>
               {onlineRecommendations.map((recommendation) => (
                 <OnlineRecommendationCard key={recommendation.id} recommendation={recommendation} />
@@ -440,7 +423,7 @@ export function FindDietician({ user }: FindDieticianProps) {
           <Card>
             <CardHeader>
               <CardTitle>
-                <Video />
+                <Ionicons name="videocam-outline" size={20} color="#666" />
                 Why Choose Online Nutrition Counseling?
               </CardTitle>
             </CardHeader>
@@ -448,29 +431,29 @@ export function FindDietician({ user }: FindDieticianProps) {
               <View>
                 <View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>Convenient scheduling from home</Text>
                   </View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>Access to specialists worldwide</Text>
                   </View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>Often more affordable options</Text>
                   </View>
                 </View>
                 <View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>Digital meal planning tools</Text>
                   </View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>24/7 support and tracking</Text>
                   </View>
                   <View>
-                    <CheckCircle />
+                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                     <Text>Flexible communication options</Text>
                   </View>
                 </View>

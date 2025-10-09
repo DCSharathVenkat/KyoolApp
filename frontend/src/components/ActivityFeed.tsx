@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -22,555 +22,306 @@ interface ActivityFeedProps {
 }
 
 export const ActivityFeed = memo(function ActivityFeed({ user, onViewAllFriends, onStartWorkout }: ActivityFeedProps) {
-  const [isWorkoutListOpen, setIsWorkoutListOpen] = useState(false);
-  const [currentWorkout, setCurrentWorkout] = useState<any>(null);
   const [visibleActivities, setVisibleActivities] = useState(5);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [showQuickWalkTimer, setShowQuickWalkTimer] = useState(false);
 
-  // Workout routines data (from FitnessTracker)
-  const workoutRoutines = [
-    {
-      id: 1,
-      name: 'Push Day',
-      difficulty: 'Intermediate',
-      duration: '45 min',
-      targetMuscles: ['Chest', 'Shoulders', 'Triceps'],
-      exercises: [
-        { name: 'Bench Press', sets: 3, reps: '8-12', weight: '80kg' },
-        { name: 'Push Ups', sets: 3, reps: '15-20', weight: 'bodyweight' },
-        { name: 'Dumbbell Flyes', sets: 3, reps: '12-15', weight: '15kg' },
-        { name: 'Inclined Bench Press', sets: 3, reps: '8-10', weight: '70kg' }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Pull Day',
-      difficulty: 'Intermediate',
-      duration: '40 min',
-      targetMuscles: ['Back', 'Biceps'],
-      exercises: [
-        { name: 'Pull-ups', sets: 3, reps: '8-12', weight: 'bodyweight' },
-        { name: 'Barbell Rows', sets: 3, reps: '10-12', weight: '60kg' },
-        { name: 'Lat Pulldowns', sets: 3, reps: '12-15', weight: '50kg' }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Leg Day',
-      difficulty: 'Advanced',
-      duration: '50 min',
-      targetMuscles: ['Quadriceps', 'Glutes', 'Hamstrings'],
-      exercises: [
-        { name: 'Squats', sets: 4, reps: '8-10', weight: '100kg' },
-        { name: 'Deadlifts', sets: 3, reps: '6-8', weight: '120kg' },
-        { name: 'Lunges', sets: 3, reps: '12-15', weight: '20kg' }
-      ]
-    }
+  // Mock data
+  const healthStats = [
+    { label: 'Steps', value: '8,547', change: '+12%', icon: 'walk', color: '#4CAF50' },
+    { label: 'Calories', value: '2,180', change: '+8%', icon: 'flame', color: '#FF5722' },
+    { label: 'Water', value: '6/8', change: '75%', icon: 'water', color: '#2196F3' },
+    { label: 'Friends', value: '23', change: '+3', icon: 'people', color: '#9C27B0' }
   ];
-
-  const handleStartWorkout = (routine: any) => {
-    if (onStartWorkout) {
-      onStartWorkout(routine);
-    } else {
-      console.log('Starting workout:', routine.name);
-      alert(`Starting ${routine.name} workout!`);
-    }
-  };
-
-  const handleOpenWorkoutList = () => {
-    setIsWorkoutListOpen(true);
-  };
-
-  const handleSetCurrentWorkout = (workout: any) => {
-    setCurrentWorkout(workout);
-  };
-
-  const handleQuickWalkClick = () => {
-    setShowQuickWalkTimer(true);
-  };
-
-  const handleBackFromTimer = () => {
-    setShowQuickWalkTimer(false);
-  };
 
   const activities = [
-    {
-      id: 1,
-      type: 'achievement',
-      icon: Trophy,
-      iconColor: 'text-yellow-500',
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      title: 'Daily Water Goal Complete!',
-      description: 'You reached your 8 glasses water goal',
-      time: '2 minutes ago',
-      user: { name: 'You', avatar: user.avatar },
-      likes: 0,
-      comments: 0
-    },
-    {
-      id: 2,
-      type: 'social',
-      icon: Users,
-      iconColor: 'text-blue-500',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      title: 'Sarah J. shared a healthy recipe',
-      description: 'Mediterranean Quinoa Bowl - only 340 calories!',
-      time: '15 minutes ago',
-      user: { name: 'Sarah J.', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face' },
-      likes: 12,
-      comments: 3
-    },
-    {
-      id: 3,
-      type: 'fitness',
-      icon: Activity,
-      iconColor: 'text-purple-500',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      title: 'You completed a 45-min walk',
-      description: '6,847 steps • 287 calories burned',
-      time: '1 hour ago',
-      user: { name: 'You', avatar: user.avatar },
-      likes: 0,
-      comments: 0
-    },
-    {
-      id: 4,
-      type: 'safe-zone',
-      icon: Target,
-      iconColor: 'text-green-500',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      title: 'Safe Zone Alert Helped You!',
-      description: 'Avoided 650 calories by choosing grilled chicken over fried',
-      time: '2 hours ago',
-      user: { name: 'You', avatar: user.avatar },
-      likes: 0,
-      comments: 0
-    },
-    {
-      id: 5,
-      type: 'nutrition',
-      icon: ChefHat,
-      iconColor: 'text-orange-500',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200',
-      title: 'Mike C. is on a 7-day healthy streak!',
-      description: 'Stayed within calorie goals for a full week',
-      time: '3 hours ago',
-      user: { name: 'Mike C.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face' },
-      likes: 24,
-      comments: 8
-    }
+    { id: 1, title: 'Workout Complete', desc: '30 min HIIT', time: '2h ago', icon: 'fitness' },
+    { id: 2, title: 'Step Goal Reached', desc: '10,000 steps!', time: '4h ago', icon: 'walk' },
+    { id: 3, title: 'Meal Logged', desc: 'Healthy breakfast', time: '6h ago', icon: 'restaurant' },
+    { id: 4, title: 'Water Goal', desc: '8 glasses today', time: '8h ago', icon: 'water' },
+    { id: 5, title: 'Sleep Tracked', desc: '7.5 hours', time: '10h ago', icon: 'moon' }
   ];
 
-  const quickStats = [
-    { label: 'Today\'s Steps', value: '8,547', change: '+12%', icon: Activity, color: 'text-blue-500' },
-    { label: 'Water Intake', value: '7/8', change: '87%', icon: Droplets, color: 'text-cyan-500' },
-    { label: 'Calories Left', value: '480', change: 'Good', icon: Target, color: 'text-green-500' },
-    { label: 'Active Friends', value: '23', change: '+3', icon: Users, color: 'text-purple-500' }
-  ];
-
-  const handleLoadMore = async () => {
+  const handleLoadMore = () => {
     setIsLoadingMore(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setVisibleActivities(prev => Math.min(prev + 5, activities.length));
-    setIsLoadingMore(false);
+    setTimeout(() => {
+      setVisibleActivities(prev => Math.min(prev + 3, activities.length));
+      setIsLoadingMore(false);
+    }, 1000);
   };
 
-  const displayedActivities = activities.slice(0, visibleActivities);
-  const hasMoreActivities = visibleActivities < activities.length;
-
-  // Quick workout types data
-  const quickWorkouts = [
-    {
-      id: 'quick-walk',
-      name: 'Quick Walk',
-      duration: '15 min',
-      icon: Footprints,
-      iconColor: 'text-green-600',
-      bgColor: 'bg-green-100',
-      hoverColor: 'hover:bg-green-200',
-      borderColor: 'border-green-300',
-      description: 'Light cardio walk'
-    },
-    {
-      id: 'hiit-training',
-      name: 'HIIT Training',
-      duration: '20 min',
-      icon: Zap,
-      iconColor: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      hoverColor: 'hover:bg-orange-200',
-      borderColor: 'border-orange-300',
-      description: 'High intensity workout'
-    },
-    {
-      id: 'strength-training',
-      name: 'Strength Training',
-      duration: '45 min',
-      icon: Dumbbell,
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      hoverColor: 'hover:bg-blue-200',
-      borderColor: 'border-blue-300',
-      description: 'Muscle building'
-    },
-    {
-      id: 'yoga-flow',
-      name: 'Yoga Flow',
-      duration: '30 min',
-      icon: Heart,
-      iconColor: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      hoverColor: 'hover:bg-purple-200',
-      borderColor: 'border-purple-300',
-      description: 'Mindful movement'
-    }
-  ];
-
-  const handleQuickWorkoutClick = (workout: any) => {
-    if (workout.id === 'quick-walk') {
-      handleQuickWalkClick();
+  const handleQuickWorkout = (type: string) => {
+    if (onStartWorkout) {
+      onStartWorkout({ type, name: `Quick ${type}` });
     } else {
-      console.log(`Starting ${workout.name}`);
-      alert(`${workout.name} - Coming soon!`);
+      Alert.alert('Workout', `Starting ${type} workout!`);
     }
   };
-
-  // Show Quick Walk Timer if active
-  if (showQuickWalkTimer) {
-    return <QuickWalkTimer onBack={handleBackFromTimer} />;
-  }
 
   return (
-    <View>
-      <WorkoutListDialog
-        open={isWorkoutListOpen}
-        onOpenChange={setIsWorkoutListOpen}
-        currentWorkout={currentWorkout}
-        onStartWorkout={onStartWorkout || (() => {})}
-        onSetCurrentWorkout={handleSetCurrentWorkout}
-      />
-      {/* Header with Quick Stats */}
-      <View>
-        <View>
-          <h1>Your Activity</h1>
-          <Text>Your Fitness, Fully Personalized</Text>
-        </View>
-
-        {/* Quick Stats Cards - No animations for better performance */}
-        <View>
-          {quickStats.map((stat, index) => {
-            const Icon = stat.icon;
-            const isActiveFriends = stat.label === 'Active Friends';
-            
-            return (
-              <View key={index}>
-                <Card 
-                 `}
-                  onPress={isActiveFriends ? onViewAllFriends : undefined}
-                >
-                  <CardContent>
-                    <View>
-                      <Icon`} />
-                      <Text>{stat.change}</Text>
-                    </View>
-                    <View>
-                      <View>{stat.value}</View>
-                      <View>{stat.label}</View>
-                    </View>
-                  </CardContent>
-                </Card>
-              </View>
-            );
-          })}
-        </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Today's Overview</Text>
+        <TouchableOpacity onPress={onViewAllFriends}>
+          <Ionicons name="people" size={24} color="#667eea" />
+        </TouchableOpacity>
       </View>
 
-      {/* Quick Workouts Section */}
-      <View>
-        <View>
-          <View>
-            <h2>
-              <Dumbbell />
-              Quick Workouts
-            </h2>
-            <Text>Ready-to-go workout routines</Text>
+      {/* Stats Grid */}
+      <View style={styles.statsGrid}>
+        {healthStats.map((stat, index) => (
+          <View key={index} style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+              <Text style={styles.statChange}>{stat.change}</Text>
+            </View>
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
           </View>
+        ))}
+      </View>
+
+      {/* Quick Workouts */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Workouts</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.workoutsRow}>
+          {['Cardio', 'Strength', 'Yoga', 'HIIT'].map((workout, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.workoutCard, { backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f39c12'][index] }]}
+              onPress={() => handleQuickWorkout(workout)}
+            >
+              <View style={styles.workoutIcon}>
+                <Ionicons 
+                  name={['heart', 'barbell', 'leaf', 'flash'][index] as any} 
+                  size={24} 
+                  color="white" 
+                />
+              </View>
+              <Text style={styles.workoutName}>{workout}</Text>
+              <Text style={styles.workoutDuration}>15-30 min</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Recent Activity */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <View style={styles.activitiesList}>
+          {activities.slice(0, visibleActivities).map((activity) => (
+            <View key={activity.id} style={styles.activityItem}>
+              <View style={styles.activityIcon}>
+                <Ionicons name={activity.icon as any} size={20} color="#667eea" />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>{activity.title}</Text>
+                <Text style={styles.activityDescription}>{activity.desc}</Text>
+                <Text style={styles.activityTime}>{activity.time}</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
-        <View>
-          {/* Left side - Push Day workout */}
-          <View>
-            {(() => {
-              const displayWorkout = currentWorkout || workoutRoutines[0];
-              return (
-                <Card>
-                  <CardContent>
-                    {/* Header with title and action buttons */}
-                    <View>
-                      <h3>{displayWorkout.name}</h3>
-                      <TouchableOpacity
-                        variant="ghost"
-                        size="sm"
-                       
-                        onPress={() => {/* More options would go here */}}
-                      >
-                        <MoreVertical />
-                      </TouchableOpacity>
-                    </View>
+        {visibleActivities < activities.length && (
+          <TouchableOpacity 
+            style={styles.loadMoreButton}
+            onPress={handleLoadMore}
+            disabled={isLoadingMore}
+          >
+            <Text style={styles.loadMoreText}>
+              {isLoadingMore ? 'Loading...' : 'Load More'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-                    {/* Badges */}
-                    <View>
-                      <Badge 
-                        variant="secondary" 
-                       
-                      >
-                        {displayWorkout.difficulty}
-                      </Badge>
-                      <Badge 
-                        variant="secondary" 
-                       
-                      >
-                        {displayWorkout.duration}
-                      </Badge>
-                    </View>
-
-                    {/* Target Muscles */}
-                    <View>
-                      <Text>Target Muscles:</Text>
-                      <Text>
-                        {displayWorkout.targetMuscles.join(', ')}
-                      </Text>
-                    </View>
-
-                    {/* Exercises */}
-                    <View>
-                      <Text>Exercises ({displayWorkout.exercises.length}):</Text>
-                      <Text>
-                        {displayWorkout.exercises.slice(0, 3).map((ex: { name: any; }) => ex.name).join(', ')}
-                        {displayWorkout.exercises.length > 3 && '...'}
-                      </Text>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View>
-                      <TouchableOpacity
-                        onPress={() => handleStartWorkout(displayWorkout)}
-                       
-                      >
-                        <Play />
-                        Start Workout
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        variant="outline"
-                        onPress={handleOpenWorkoutList}
-                       
-                      >
-                        Workout List
-                      </TouchableOpacity>
-                    </View>
-                  </CardContent>
-                </Card>
-              );
-            })()}
+      {/* Weekly Summary */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Weekly Summary</Text>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Workouts Completed</Text>
+            <Text style={styles.summaryValue}>12</Text>
           </View>
-
-          {/* Right side - Responsive Grid of Quick Workouts */}
-          <View>
-            <View>
-              {quickWorkouts.map((workout) => {
-                const Icon = workout.icon;
-                return (
-                  <View key={workout.id}>
-                    <Card 
-                      ${workout.bgColor} ${workout.hoverColor} hover:shadow-md group`}
-                      onPress={() => handleQuickWorkoutClick(workout)}
-                    >
-                      <CardContent>
-                        <View>
-                          {/* Icon */}
-                          <View>
-                            <Icon`} />
-                          </View>
-                          
-                          {/* Content */}
-                          <View>
-                            <h3>{workout.name}</h3>
-                            <Text>{workout.duration}</Text>
-                          </View>
-                        </View>
-                      </CardContent>
-                    </Card>
-                  </View>
-                );
-              })}
-            </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Average Steps</Text>
+            <Text style={styles.summaryValue}>8,547</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Active Friends</Text>
+            <Text style={styles.summaryValue}>23</Text>
           </View>
         </View>
       </View>
-
-      {/* Social Health Community Section */}
-      <View>
-        <Card>
-          <CardContent>
-            <View>
-              <View>
-                <h2>Social Health Community</h2>
-                <Text>
-                  Connect with like-minded individuals, share your journey, and get inspired by others who understand your health goals.
-                </Text>
-              </View>
-              
-              <View>
-                <View>
-                  <View />
-                  <Text>Community challenges</Text>
-                </View>
-                <View>
-                  <View />
-                  <Text>Progress sharing</Text>
-                </View>
-                <View>
-                  <View />
-                  <Text>Motivational support</Text>
-                </View>
-              </View>
-              
-              <View>
-                <TouchableOpacity 
-                  onPress={onViewAllFriends}
-                 
-                >
-                  View all friends →
-                </TouchableOpacity>
-              </View>
-            </View>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent>
-            <View>
-              <View>
-                <View>
-                  <Users />
-                </View>
-                <View>
-                  <h3>Join the Community</h3>
-                  <Text>Connect with health enthusiasts</Text>
-                </View>
-              </View>
-            </View>
-          </CardContent>
-        </Card>
-      </View>
-
-      {/* Activity Feed - Simplified without heavy animations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <TrendingUp />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <View>
-            {displayedActivities.map((activity) => {
-              const Icon = activity.icon;
-              return (
-                <View
-                  key={activity.id}
-                  ${activity.bgColor} hover:shadow-sm transition-shadow`}
-                >
-                  {/* Activity Icon */}
-                  <View>
-                    <View>
-                      <Icon`} />
-                    </View>
-                  </View>
-
-                  {/* Activity Content */}
-                  <View>
-                    <View>
-                      <View>
-                        <h4>{activity.title}</h4>
-                        <Text>{activity.description}</Text>
-                        
-                        {/* User and Time */}
-                        <View>
-                          <Avatar>
-                            <AvatarImage src={activity.user.avatar} />
-                            <AvatarFallback>{activity.user.name[0]}</AvatarFallback>
-                          </Avatar>
-                          <Text>{activity.user.name}</Text>
-                          <Text>•</Text>
-                          <View>
-                            <Clock />
-                            <Text>{activity.time}</Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* Activity Type Badge */}
-                      <Badge variant="secondary">
-                        {activity.type}
-                      </Badge>
-                    </View>
-
-                    {/* Social Actions (for social activities) */}
-                    {(activity.likes > 0 || activity.comments > 0) && (
-                      <View>
-                        <TouchableOpacity>
-                          <ThumbsUp />
-                          <Text>{activity.likes}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity>
-                          <MessageCircle />
-                          <Text>{activity.comments}</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Load More */}
-          {hasMoreActivities && (
-            <View>
-              <TouchableOpacity
-                variant="ghost"
-                onPress={handleLoadMore}
-                disabled={isLoadingMore}
-               
-              >
-                {isLoadingMore ? (
-                  <>
-                    <View />
-                    Loading...
-                  </>
-                ) : (
-                  'Load more activities...'
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-          
-          {!hasMoreActivities && displayedActivities.length > 5 && (
-            <View>
-              <Text>
-                You've reached the end of your activity feed
-              </Text>
-            </View>
-          )}
-        </CardContent>
-      </Card>
-    </View>
+    </ScrollView>
   );
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statCard: {
+    width: (width - 48) / 2,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statChange: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  workoutsRow: {
+    paddingLeft: 4,
+  },
+  workoutCard: {
+    width: 120,
+    padding: 16,
+    borderRadius: 12,
+    marginRight: 12,
+    alignItems: 'center',
+  },
+  workoutIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  workoutName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  workoutDuration: {
+    fontSize: 12,
+    color: 'white',
+    opacity: 0.8,
+  },
+  activitiesList: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 8,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f2ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  activityDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  activityTime: {
+    fontSize: 11,
+    color: '#999',
+  },
+  loadMoreButton: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    color: '#667eea',
+    fontWeight: '600',
+  },
+  summaryCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
 });

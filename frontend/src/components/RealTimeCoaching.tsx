@@ -1,23 +1,11 @@
 // AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
 // Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, TextInput, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  Activity, 
-  Heart, 
-  AlertTriangle, 
-  CheckCircle, 
-  TrendingDown, 
-  TrendingUp,
-  Pause,
-  Play,
-  RotateCcw,
-  MessageCircle
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Ionicons } from '@expo/vector-icons';
 
 interface RealTimeCoachingProps {
   isWorkoutActive: boolean;
@@ -116,7 +104,7 @@ export function RealTimeCoaching({
         title: 'Heart Rate Alert',
         message: 'Your heart rate is very high. Consider slowing down or taking a brief rest.',
         action: 'Reduce Intensity',
-        icon: AlertTriangle,
+        icon: 'warning',
         color: 'text-red-500',
         bgColor: 'bg-red-50',
         actionType: 'reduce_intensity'
@@ -131,7 +119,7 @@ export function RealTimeCoaching({
         title: 'Fatigue Detected',
         message: 'You\'re showing signs of fatigue. Let\'s switch to a recovery exercise.',
         action: 'Switch Exercise',
-        icon: TrendingDown,
+        icon: 'trending-down',
         color: 'text-orange-500',
         bgColor: 'bg-orange-50',
         actionType: 'switch_exercise'
@@ -146,7 +134,7 @@ export function RealTimeCoaching({
         title: 'Form Check',
         message: 'Your form may be compromising due to fatigue. Focus on quality over quantity.',
         action: 'Form Tips',
-        icon: RotateCcw,
+        icon: 'refresh',
         color: 'text-blue-500',
         bgColor: 'bg-blue-50',
         actionType: 'form_correction'
@@ -161,7 +149,7 @@ export function RealTimeCoaching({
         title: 'Push a Little Harder',
         message: 'You have more in the tank! Try increasing your pace or resistance.',
         action: 'Increase Intensity',
-        icon: TrendingUp,
+        icon: 'trending-up',
         color: 'text-green-500',
         bgColor: 'bg-green-50',
         actionType: 'increase_intensity'
@@ -176,7 +164,7 @@ export function RealTimeCoaching({
         title: 'Perfect Zone!',
         message: 'You\'re in the sweet spot! Great form and intensity.',
         action: 'Keep Going',
-        icon: CheckCircle,
+        icon: 'checkmark-circle',
         color: 'text-green-500',
         bgColor: 'bg-green-50',
         actionType: 'maintain'
@@ -225,8 +213,8 @@ export function RealTimeCoaching({
     return (
       <Card>
         <CardContent>
-          <Play />
-          <h3>Real-time Coaching Inactive</h3>
+          <Ionicons name="play" size={24} color="#667eea" />
+          <Text style={styles.inactiveTitle}>Real-time Coaching Inactive</Text>
           <Text>
             Start a workout to activate AI coaching and real-time adjustments
           </Text>
@@ -241,7 +229,7 @@ export function RealTimeCoaching({
       <Card>
         <CardContent>
           <View>
-            <h3>Live Workout Monitoring</h3>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Live Workout Monitoring</Text>
             <Badge variant="outline">
               <View />
               Active
@@ -251,38 +239,34 @@ export function RealTimeCoaching({
           <View>
             <View>
               <View>
-                <Activity />
-                <motion.span 
-                 
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
+                <Ionicons name="pulse" size={20} color="#667eea" />
+                <Text style={styles.metricValue}>
                   {metrics.heartRate}
-                </motion.span>
+                </Text>
               </View>
               <Text>BPM</Text>
             </View>
 
             <View>
               <View>
-                <TrendingUp`} />
-                <Text>{metrics.intensity}</Text>
+                <Ionicons name="trending-up" size={20} color="#667eea" />
+                <Text style={styles.metricValue}>{metrics.intensity}</Text>
               </View>
               <Text>Intensity</Text>
             </View>
 
             <View>
               <View>
-                <CheckCircle`} />
-                <Text>{metrics.form.replace('_', ' ')}</Text>
+                <Ionicons name="checkmark-circle" size={20} color="#667eea" />
+                <Text style={styles.metricValue}>{metrics.form.replace('_', ' ')}</Text>
               </View>
               <Text>Form</Text>
             </View>
 
             <View>
               <View>
-                <Heart />
-                <Text>{metrics.rpe}/10</Text>
+                <Ionicons name="heart" size={20} color="#667eea" />
+                <Text style={styles.metricValue}>{metrics.rpe}/10</Text>
               </View>
               <Text>RPE</Text>
             </View>
@@ -291,61 +275,42 @@ export function RealTimeCoaching({
       </Card>
 
       {/* Real-time Coaching Message */}
-      <AnimatePresence>
-        {coachingMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card`}>
-              <CardContent`}>
-                <View>
-                  <coachingMessage.icon mt-0.5`} />
-                  <View>
-                    <View>
-                      <h4>{coachingMessage.title}</h4>
-                      <Badge variant={
-                        coachingMessage.priority === 'high' ? 'destructive' :
-                        coachingMessage.priority === 'medium' ? 'secondary' : 
-                        'outline'
-                      }>
-                        AI Coach
-                      </Badge>
-                    </View>
-                    <Text>
-                      {coachingMessage.message}
-                    </Text>
-                    <TouchableOpacity 
-                      size="sm" 
-                      variant="outline"
-                      onPress={() => handleCoachingAction(coachingMessage.actionType)}
-                     
-                    >
-                      {coachingMessage.action}
-                    </TouchableOpacity>
-                  </View>
+      {coachingMessage && (
+        <Card>
+          <CardContent>
+            <View style={styles.coachingMessageContainer}>
+              <View style={styles.coachingHeader}>
+                <Text style={styles.coachingTitle}>{coachingMessage.title}</Text>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>AI Coach</Text>
                 </View>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </View>
+              <Text style={styles.coachingMessage}>
+                {coachingMessage.message}
+              </Text>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => handleCoachingAction(coachingMessage.actionType)}
+              >
+                <Text style={styles.actionButtonText}>{coachingMessage.action}</Text>
+              </TouchableOpacity>
+            </View>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Coaching History */}
       {messageHistory.length > 0 && (
         <Card>
           <CardContent>
-            <View>
-              <MessageCircle />
-              <h4>Recent Coaching</h4>
+            <View style={styles.historyHeader}>
+              <Ionicons name="chatbubble" size={20} color="#667eea" />
+              <Text style={styles.historyTitle}>Recent Coaching</Text>
             </View>
-            <View>
+            <View style={styles.historyList}>
               {messageHistory.map((msg, index) => (
-                <View key={index}>
-                  <msg.icon`} />
-                  <Text>{msg.title}: {msg.message}</Text>
+                <View key={index} style={styles.historyItem}>
+                  <Text style={styles.historyText}>{msg.title}: {msg.message}</Text>
                 </View>
               ))}
             </View>
@@ -355,3 +320,86 @@ export function RealTimeCoaching({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  coachingMessageContainer: {
+    padding: 16,
+  },
+  coachingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  coachingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  badge: {
+    backgroundColor: '#667eea',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  coachingMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  actionButton: {
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  actionButtonText: {
+    color: '#667eea',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 8,
+  },
+  historyList: {
+    gap: 8,
+  },
+  historyItem: {
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  historyText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  inactiveTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 12,
+  },
+  metricValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 8,
+  },
+});

@@ -1,48 +1,88 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot@1.1.2";
-import { cva, type VariantProps } from "class-variance-authority@0.7.1";
+// React Native Badge Component
+import React from 'react';
+import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-import { cn } from "./utils";
+interface BadgeProps {
+  className?: string;
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+  children?: React.ReactNode;
+}
 
-const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
+function Badge({ 
+  className, 
+  variant = 'default', 
+  style, 
+  textStyle, 
+  children,
+  ...props 
+}: BadgeProps) {
+  const badgeStyle = [
+    styles.badge,
+    styles[`variant_${variant}`],
+    style,
+  ];
 
-function Badge({
-  className,
-  variant,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span";
+  const badgeTextStyle = [
+    styles.badgeText,
+    styles[`text_${variant}`],
+    textStyle,
+  ];
 
   return (
-    <Comp
-      data-slot="badge"
-     ), className)}
-      {...props}
-    />
+    <View style={badgeStyle} {...props}>
+      {typeof children === 'string' ? (
+        <Text style={badgeTextStyle}>{children}</Text>
+      ) : (
+        children
+      )}
+    </View>
   );
 }
 
-export { Badge, badgeVariants };
+const styles = StyleSheet.create({
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  // Variants
+  variant_default: {
+    backgroundColor: '#007AFF',
+  },
+  text_default: {
+    color: 'white',
+  },
+  variant_secondary: {
+    backgroundColor: '#F2F2F7',
+  },
+  text_secondary: {
+    color: '#1C1C1E',
+  },
+  variant_destructive: {
+    backgroundColor: '#FF3B30',
+  },
+  text_destructive: {
+    color: 'white',
+  },
+  variant_outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+  },
+  text_outline: {
+    color: '#007AFF',
+  },
+});
+
+export { Badge };

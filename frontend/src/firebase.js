@@ -1,25 +1,90 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-import { initializeApp } from "firebase/app";
-import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
+// Temporary Mock Firebase Auth for Development
+// This will allow the app to run without Firebase initialization issues
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_MEASUREMENT_ID,
+// Mock Firebase app
+const mockApp = {
+  name: 'mock-app',
+  options: {}
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-setPersistence(auth, browserLocalPersistence);
-export { auth };
+// Mock Auth object that matches Firebase Auth interface
+export const auth = {
+  currentUser: null,
+  
+  // Mock authentication methods
+  onAuthStateChanged: (callback) => {
+    console.log('Mock: onAuthStateChanged called');
+    // Call callback with null user initially
+    setTimeout(() => callback(null), 100);
+    // Return unsubscribe function
+    return () => console.log('Mock: Auth state listener unsubscribed');
+  },
+  
+  signInWithEmailAndPassword: async (email, password) => {
+    console.log('Mock: Sign in with:', email);
+    return {
+      user: {
+        uid: 'mock-user-id',
+        email: email,
+        displayName: 'Mock User',
+        emailVerified: true
+      }
+    };
+  },
+  
+  createUserWithEmailAndPassword: async (email, password) => {
+    console.log('Mock: Create user with:', email);
+    return {
+      user: {
+        uid: 'mock-user-id-' + Date.now(),
+        email: email,
+        displayName: 'New Mock User',
+        emailVerified: false
+      }
+    };
+  },
+  
+  signOut: async () => {
+    console.log('Mock: User signed out');
+    return Promise.resolve();
+  },
+  
+  sendPasswordResetEmail: async (email) => {
+    console.log('Mock: Password reset email sent to:', email);
+    return Promise.resolve();
+  }
+};
+
+// Mock other Firebase functions that might be imported
+export const initializeApp = () => mockApp;
+export const getAuth = () => auth;
+export const initializeAuth = () => auth;
+export const getReactNativePersistence = () => null;
+
+// Mock Firebase Auth functions used in other components
+export const GoogleAuthProvider = class {
+  static credential() {
+    return { mock: 'credential' };
+  }
+};
+
+export const signInWithPopup = async (auth, provider) => {
+  console.log('Mock: signInWithPopup called');
+  return {
+    user: {
+      uid: 'mock-google-user-id',
+      email: 'mock@google.com',
+      displayName: 'Mock Google User',
+      emailVerified: true
+    }
+  };
+};
+
+export const signOut = async (auth) => {
+  console.log('Mock: signOut called');
+  return Promise.resolve();
+};
+
+console.log('Mock Firebase Auth initialized for development');
+
+export default mockApp;

@@ -15,9 +15,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { WaitlistDialog } from './components/WaitlistDialog';
-import { SimpleTextInputTest } from './components/SimpleTextInputTest';
-import { MinimalTextTest } from './components/MinimalTextTest';
-import { DebugTextInput } from './components/DebugTextInput';
 
 // Import existing components
 import { HealthMetrics } from './components/HealthMetrics';
@@ -57,12 +54,12 @@ function HomeScreen({ navigation }: any) {
 
 // Login Screen
 function LoginScreen({ navigation }: any) {
-  return <LoginPage />;
+  return <LoginPage navigation={navigation} />;
 }
 
 // Sign Up Screen
 function SignUpScreen({ navigation }: any) {
-  return <SignUpPage />;
+  return <SignUpPage navigation={navigation} />;
 }
 
 
@@ -84,7 +81,7 @@ function DashboardScreen({ navigation }: any) {
     healthScore: 85
   };
 
-  return <Dashboard user={user} />;
+  return <Dashboard user={user} navigation={navigation} />;
 }
 
 
@@ -277,11 +274,6 @@ export default function App() {
         name="Profile" 
         component={ProfileScreen} 
         options={{ title: 'Profile' }}
-      />
-      <Stack.Screen 
-        name="TextTest" 
-        component={MinimalTextTest} 
-        options={{ title: 'Text Input Test' }}
       />
       <Stack.Screen 
         name="Activity" 

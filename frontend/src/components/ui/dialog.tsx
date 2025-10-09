@@ -1,242 +1,194 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-"use client";
+// React Native Dialog Component using Modal
+import React, { createContext, useContext, useState } from 'react';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import * as React from "react";
-import { createPortal } from "react-dom";
-import { XIcon } from "lucide-react";
-
-function cn(...cls: Array<string | false | null | undefined>) {
-  return cls.filter(Boolean).join(" ");
+interface DialogContextType {
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
-type Ctx = { open: boolean; setOpen: (v: boolean) => void };
-const DialogCtx = React.createContext<Ctx | null>(null);
+const DialogContext = createContext<DialogContextType | null>(null);
 
-type RootProps = {
+interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  children?: React.ReactNode;
-};
+  children: React.ReactNode;
+}
 
-function Dialog({ open = false, onOpenChange, children }: RootProps) {
-  const [internalOpen, setInternalOpen] = React.useState(open);
-  React.useEffect(() => {
-    setInternalOpen(open);
-    // Add class to body to isolate dialog
-    if (open && typeof document !== "undefined") {
-      document.body.classList.add("dialog-open");
-    } else if (!open && typeof document !== "undefined") {
-      document.body.classList.remove("dialog-open");
+function Dialog({ open = false, onOpenChange, children }: DialogProps) {
+  const [internalOpen, setInternalOpen] = useState(open);
+  
+  const setOpen = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
     }
-  }, [open]);
-  const setOpen = (v: boolean) => (onOpenChange ? onOpenChange(v) : setInternalOpen(v));
+  };
+
+  const isOpen = onOpenChange ? open : internalOpen;
+
   return (
-    <DialogCtx.Provider value={{ open: onOpenChange ? open : internalOpen, setOpen }}>
+    <DialogContext.Provider value={{ open: isOpen, setOpen }}>
       {children}
-    </DialogCtx.Provider>
+    </DialogContext.Provider>
   );
 }
 
 function useDialog() {
-  const ctx = React.useContext(DialogCtx);
-  if (!ctx) throw new Error("Dialog.* must be used within <Dialog>");
-  return ctx;
+  const context = useContext(DialogContext);
+  if (!context) {
+    throw new Error('Dialog components must be used within a Dialog');
+  }
+  return context;
 }
 
-export function DialogTrigger(
-  props: React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
-) {
+interface DialogTriggerProps {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
+
+function DialogTrigger({ children }: DialogTriggerProps) {
   const { setOpen } = useDialog();
-  const { onClick, ...rest } = props;
+  
   return (
-    <TouchableOpacity
-      {...rest}
-      data-slot="dialog-trigger"
-      onPress={(e) => {
-        onClick?.(e);
-        setOpen(true);
-      }}
-    />
+    <TouchableOpacity onPress={() => setOpen(true)}>
+      {children}
+    </TouchableOpacity>
   );
 }
 
-function DialogPortal({ children }: { children?: React.ReactNode }) {
-  if (typeof document === "undefined") return null;
-  return createPortal(children, document.body);
+interface DialogContentProps {
+  children: React.ReactNode;
+  style?: any;
 }
 
-// Lock body scroll while open
-function useBodyScrollLock(active: boolean) {
-  React.useEffect(() => {
-    if (!active || typeof window === "undefined") return;
-    const body = document.body;
-    const html = document.documentElement;
-    const scrollY = window.scrollY;
-
-    const prev = {
-      bodyPos: body.style.position,
-      bodyTop: body.style.top,
-      bodyW: body.style.width,
-      bodyOv: body.style.overflow,
-      htmlOv: html.style.overflow,
-    };
-
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
-    body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
-
-    return () => {
-      body.style.position = prev.bodyPos;
-      body.style.top = prev.bodyTop;
-      body.style.width = prev.bodyW;
-      body.style.overflow = prev.bodyOv;
-      html.style.overflow = prev.htmlOv;
-      window.scrollTo(0, scrollY);
-    };
-  }, [active]);
-}
-
-export const DialogOverlay = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
->(({ className, ...props }, ref) => (
-  <View
-    ref={ref}
-    data-slot="dialog-overlay"
-   
-    style={{
-      backdropFilter: "none",
-      WebkitBackdropFilter: "none",
-      mixBlendMode: "normal",
-    }}
-    {...props}
-  />
-));
-DialogOverlay.displayName = "DialogOverlay";
-
-export const DialogContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
->(({ className, children, ...props }, ref) => {
+function DialogContent({ children, style }: DialogContentProps) {
   const { open, setOpen } = useDialog();
-  if (!open) return null;
-
-  useBodyScrollLock(true);
 
   return (
-    <DialogPortal>
-      <View
-       
-        aria-modal="true"
-        role="dialog"
-      >
-        <DialogOverlay onPress={() => setOpen(false)} />
-        <View
-          ref={ref}
-          data-slot="dialog-content"
-         
-          style={{
-            backgroundColor: "rgb(255, 255, 255)",
-            mixBlendMode: "normal",
-            backdropFilter: "none",
-            WebkitBackdropFilter: "none",
-            filter: "none",
-            opacity: 1,
-          }}
-          onPress={(e) => e.stopPropagation()}
-          {...props}
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setOpen(false)}
+    >
+      <View style={styles.overlay}>
+        <TouchableOpacity 
+          style={styles.overlayTouchable} 
+          activeOpacity={1} 
+          onPress={() => setOpen(false)}
         >
-          {/* HARD RESET: Stop any page blend/blur/opacity leakage */}
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-              .ka-dialog-root, .ka-dialog-root * {
-                mix-blend-mode: normal !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                filter: none !important;
-                opacity: 1 !important;
-                background-color: inherit !important;
-              }
-              body:not(.dialog-open) * {
-                z-index: auto !important;
-              }
-              body.dialog-open *:not(.ka-dialog-root) {
-                z-index: 0 !important;
-              }
-              `,
-            }}
-          />
-          {children}
-          <TouchableOpacity
-            data-slot="dialog-close"
-           
-            onPress={() => setOpen(false)}
-            aria-label="Close"
-          >
-            <XIcon />
-          </TouchableOpacity>
-        </View>
+          <View style={[styles.content, style]} onStartShouldSetResponder={() => true}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setOpen(false)}
+            >
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {children}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
       </View>
-    </DialogPortal>
+    </Modal>
   );
+}
+
+interface DialogHeaderProps {
+  children: React.ReactNode;
+}
+
+function DialogHeader({ children }: DialogHeaderProps) {
+  return (
+    <View style={styles.header}>
+      {children}
+    </View>
+  );
+}
+
+interface DialogTitleProps {
+  children: React.ReactNode;
+}
+
+function DialogTitle({ children }: DialogTitleProps) {
+  return (
+    <Text style={styles.title}>
+      {children}
+    </Text>
+  );
+}
+
+interface DialogDescriptionProps {
+  children: React.ReactNode;
+}
+
+function DialogDescription({ children }: DialogDescriptionProps) {
+  return (
+    <Text style={styles.description}>
+      {children}
+    </Text>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlayTouchable: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  content: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    maxWidth: '90%',
+    maxHeight: '80%',
+    minWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 1,
+    padding: 4,
+  },
+  header: {
+    marginBottom: 16,
+    paddingRight: 40, // Space for close button
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
 });
-DialogContent.displayName = "DialogContent";
 
-export function DialogHeader(props: React.ComponentProps<"div">) {
-  const { className, ...rest } = props;
-  return (
-    <View
-      data-slot="dialog-header"
-     
-      {...rest}
-    />
-  );
-}
-
-export function DialogFooter(props: React.ComponentProps<"div">) {
-  const { className, ...rest } = props;
-  return (
-    <View
-      data-slot="dialog-footer"
-     
-      {...rest}
-    />
-  );
-}
-
-export const DialogTitle = React.forwardRef<
-  HTMLHeadingElement,
-  React.ComponentPropsWithoutRef<"h2">
->(({ className, ...props }, ref) => (
-  <h2 ref={ref} data-slot="dialog-title" {...props} />
-));
-DialogTitle.displayName = "DialogTitle";
-
-export const DialogDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.ComponentPropsWithoutRef<"p">
->(({ className, ...props }, ref) => (
-  <Text ref={ref} data-slot="dialog-description" {...props} />
-));
-DialogDescription.displayName = "DialogDescription";
-
-export function DialogClose(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const { setOpen } = useDialog();
-  const { onClick, ...rest } = props;
-  return (
-    <TouchableOpacity
-      data-slot="dialog-close"
-      {...rest}
-      onPress={(e) => {
-        onClick?.(e);
-        setOpen(false);
-      }}
-    />
-  );
-}
-
-export { Dialog };
+export { 
+  Dialog, 
+  DialogTrigger, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+};

@@ -1,85 +1,113 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
 import * as React from "react";
+import { View, Text, StyleSheet, ViewProps, TextProps } from "react-native";
 
-import { cn } from "./utils";
+interface CardProps extends ViewProps {
+  children?: React.ReactNode;
+}
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+interface CardHeaderProps extends ViewProps {
+  children?: React.ReactNode;
+}
+
+interface CardTitleProps extends TextProps {
+  children?: React.ReactNode;
+}
+
+interface CardDescriptionProps extends TextProps {
+  children?: React.ReactNode;
+}
+
+interface CardContentProps extends ViewProps {
+  children?: React.ReactNode;
+}
+
+interface CardFooterProps extends ViewProps {
+  children?: React.ReactNode;
+}
+
+function Card({ children, style, ...props }: CardProps) {
   return (
-    <View
-      data-slot="card"
-     
-      {...props}
-    />
+    <View style={[styles.card, style]} {...props}>
+      {children}
+    </View>
   );
 }
 
-function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+function CardHeader({ children, style, ...props }: CardHeaderProps) {
   return (
-    <View
-      data-slot="card-header"
-     
-      {...props}
-    />
+    <View style={[styles.cardHeader, style]} {...props}>
+      {children}
+    </View>
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+function CardTitle({ children, style, ...props }: CardTitleProps) {
   return (
-    <h4
-      data-slot="card-title"
-     
-      {...props}
-    />
+    <Text style={[styles.cardTitle, style]} {...props}>
+      {children}
+    </Text>
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+function CardDescription({ children, style, ...props }: CardDescriptionProps) {
   return (
-    <Text
-      data-slot="card-description"
-     
-      {...props}
-    />
+    <Text style={[styles.cardDescription, style]} {...props}>
+      {children}
+    </Text>
   );
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+function CardContent({ children, style, ...props }: CardContentProps) {
   return (
-    <View
-      data-slot="card-action"
-     
-      {...props}
-    />
+    <View style={[styles.cardContent, style]} {...props}>
+      {children}
+    </View>
   );
 }
 
-function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+function CardFooter({ children, style, ...props }: CardFooterProps) {
   return (
-    <View
-      data-slot="card-content"
-     
-      {...props}
-    />
+    <View style={[styles.cardFooter, style]} {...props}>
+      {children}
+    </View>
   );
 }
 
-function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <View
-      data-slot="card-footer"
-     
-      {...props}
-    />
-  );
-}
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 12,
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardFooter: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+});
 
-export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardAction,
-  CardDescription,
-  CardContent,
-};
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };

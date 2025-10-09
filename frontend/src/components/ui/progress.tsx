@@ -1,30 +1,50 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-"use client";
+// React Native Progress Component
+import React from 'react';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 
-import * as React from "react";
-import * as ProgressPrimitive from "@radix-ui/react-progress@1.1.2";
+interface ProgressProps {
+  className?: string;
+  value?: number;
+  max?: number;
+  style?: ViewStyle;
+  indicatorStyle?: ViewStyle;
+}
 
-import { cn } from "./utils";
+function Progress({ 
+  className, 
+  value = 0, 
+  max = 100, 
+  style, 
+  indicatorStyle,
+  ...props 
+}: ProgressProps) {
+  const progressPercentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
-function Progress({
-  className,
-  value,
-  ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
   return (
-    <ProgressPrimitive.Root
-      data-slot="progress"
-     
-      {...props}
-    >
-      <ProgressPrimitive.Indicator
-        data-slot="progress-indicator"
-       
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+    <View style={[styles.progress, style]} {...props}>
+      <View 
+        style={[
+          styles.progressIndicator, 
+          { width: `${progressPercentage}%` },
+          indicatorStyle
+        ]} 
       />
-    </ProgressPrimitive.Root>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  progress: {
+    height: 8,
+    backgroundColor: '#E5E5EA',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressIndicator: {
+    height: '100%',
+    backgroundColor: '#007AFF',
+    borderRadius: 4,
+  },
+});
 
 export { Progress };

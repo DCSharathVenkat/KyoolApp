@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { LineChart } from 'react-native-chart-kit';
 import { addWeightLog, getWeightLogs } from '../api/user_api';
 import { calculateBMI, calculateBMR, calculateTDEE } from '../utils/health';
 
@@ -24,7 +23,21 @@ interface HealthMetricsProps {
 }
 
 export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
-  const [weightLogs, setWeightLogs] = useState([]);
+  // Mock data for demonstration when no real data exists
+  const mockWeightLogs = [
+    { weight: 72, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 71.5, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 71.8, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 71.2, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 70.9, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 70.5, date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { weight: 70.2, date: new Date().toISOString() },
+  ];
+
+  const [weightLogs, setWeightLogs] = useState(mockWeightLogs);
+  
+  // Ensure we always have data for demo
+  const displayLogs = weightLogs.length > 0 ? weightLogs : mockWeightLogs;
   const [metrics, setMetrics] = useState({
     height: user?.height || 170,
     weight: user?.weight || 70,
@@ -149,36 +162,79 @@ export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
     </View>
   );
 
-  // Simple custom chart component as fallback
+  // Enhanced chart component for React Native
   const SimpleWeightChart = ({ logs }: { logs: any[] }) => {
     const recentLogs = logs.slice(-7);
+    
+    if (recentLogs.length === 0) {
+      return (
+        <View style={styles.simpleChart}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.chartGradient}
+          >
+            <Text style={styles.chartTitle}>Weight Progress</Text>
+            <View style={styles.noDataContainer}>
+              <Ionicons name="analytics-outline" size={48} color="rgba(255,255,255,0.6)" />
+              <Text style={styles.noDataText}>No weight data available</Text>
+              <Text style={styles.noDataSubtext}>Start tracking your weight to see progress</Text>
+            </View>
+          </LinearGradient>
+        </View>
+      );
+    }
+    
     const maxWeight = Math.max(...recentLogs.map(log => log.weight));
     const minWeight = Math.min(...recentLogs.map(log => log.weight));
     const range = maxWeight - minWeight || 1;
 
     return (
       <View style={styles.simpleChart}>
-        <Text style={styles.chartTitle}>Weight Trend (Last 7 Days)</Text>
-        <View style={styles.chartBars}>
-          {recentLogs.map((log, index) => {
-            const height = ((log.weight - minWeight) / range) * 100 + 20;
-            const date = new Date(log.date);
-            return (
-              <View key={index} style={styles.chartBarContainer}>
-                <View 
-                  style={[
-                    styles.chartBar, 
-                    { height: height, backgroundColor: '#667eea' }
-                  ]} 
-                />
-                <Text style={styles.chartBarLabel}>
-                  {`${date.getMonth() + 1}/${date.getDate()}`}
-                </Text>
-                <Text style={styles.chartBarValue}>{log.weight}kg</Text>
-              </View>
-            );
-          })}
-        </View>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.chartGradient}
+        >
+          <Text style={styles.chartTitle}>Weight Progress (Last 7 Days)</Text>
+          <View style={styles.chartBars}>
+            {recentLogs.map((log, index) => {
+              const height = Math.max(((log.weight - minWeight) / range) * 120 + 30, 30);
+              const date = new Date(log.date);
+              const isLatest = index === recentLogs.length - 1;
+              return (
+                <View key={index} style={styles.chartBarContainer}>
+                  <Text style={styles.chartBarValue}>{log.weight}kg</Text>
+                  <View 
+                    style={[
+                      styles.chartBar, 
+                      { 
+                        height: height, 
+                        backgroundColor: isLatest ? '#10B981' : '#667eea',
+                        shadowColor: isLatest ? '#10B981' : '#667eea',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 3,
+                      }
+                    ]} 
+                  />
+                  <Text style={styles.chartBarLabel}>
+                    {`${date.getMonth() + 1}/${date.getDate()}`}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+          <View style={styles.chartLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#667eea' }]} />
+              <Text style={styles.legendText}>Previous</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+              <Text style={styles.legendText}>Latest</Text>
+            </View>
+          </View>
+        </LinearGradient>
       </View>
     );
   };
@@ -382,93 +438,47 @@ export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
       </View>
 
       {/* Weight Progress Chart */}
-      {weightLogs.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weight Progress</Text>
-          <View style={styles.chartContainer}>
-            {/* Try to use LineChart, fallback to simple chart if it fails */}
-            {(() => {
-              try {
-                return (
-                  <LineChart
-                    data={{
-                      labels: weightLogs.slice(-7).map(log => {
-                        const date = new Date(log.date);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
-                      }),
-                      datasets: [
-                        {
-                          data: weightLogs.slice(-7).map(log => log.weight),
-                          color: (opacity = 1) => `rgba(103, 126, 234, ${opacity})`,
-                          strokeWidth: 3
-                        }
-                      ]
-                    }}
-                    width={width - 80}
-                    height={220}
-                    yAxisSuffix="kg"
-                    chartConfig={{
-                      backgroundColor: '#ffffff',
-                      backgroundGradientFrom: '#667eea',
-                      backgroundGradientTo: '#764ba2',
-                      decimalPlaces: 1,
-                      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                      style: {
-                        borderRadius: 16
-                      },
-                      propsForDots: {
-                        r: "6",
-                        strokeWidth: "2",
-                        stroke: "#fff"
-                      }
-                    }}
-                    bezier
-                    style={styles.chart}
-                  />
-                );
-              } catch (error) {
-                return <SimpleWeightChart logs={weightLogs} />;
-              }
-            })()}
-            
-            <View style={styles.progressStats}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Weight Progress</Text>
+        <View style={styles.chartContainer}>
+          <SimpleWeightChart logs={displayLogs} />
+          
+          <View style={styles.progressStats}>
               <View style={styles.progressStat}>
                 <Text style={styles.progressStatLabel}>Latest</Text>
                 <Text style={styles.progressStatValue}>
-                  {weightLogs[weightLogs.length - 1]?.weight}kg
+                  {displayLogs[displayLogs.length - 1]?.weight}kg
                 </Text>
               </View>
-              {weightLogs.length > 1 && (
+              {displayLogs.length > 1 && (
                 <View style={styles.progressStat}>
                   <Text style={styles.progressStatLabel}>Change</Text>
                   <Text style={[
                     styles.progressStatValue,
                     { 
-                      color: (weightLogs[weightLogs.length - 1]?.weight - weightLogs[0]?.weight) > 0 
+                      color: (displayLogs[displayLogs.length - 1]?.weight - displayLogs[0]?.weight) > 0 
                         ? '#EF4444' : '#10B981' 
                     }
                   ]}>
-                    {(weightLogs[weightLogs.length - 1]?.weight - weightLogs[0]?.weight).toFixed(1)}kg
+                    {(displayLogs[displayLogs.length - 1]?.weight - displayLogs[0]?.weight).toFixed(1)}kg
                   </Text>
                 </View>
               )}
               <View style={styles.progressStat}>
                 <Text style={styles.progressStatLabel}>Entries</Text>
                 <Text style={styles.progressStatValue}>
-                  {weightLogs.length}
+                  {displayLogs.length}
                 </Text>
               </View>
               <View style={styles.progressStat}>
                 <Text style={styles.progressStatLabel}>Average</Text>
                 <Text style={styles.progressStatValue}>
-                  {(weightLogs.reduce((sum, log) => sum + log.weight, 0) / weightLogs.length).toFixed(1)}kg
+                  {(displayLogs.reduce((sum, log) => sum + log.weight, 0) / displayLogs.length).toFixed(1)}kg
                 </Text>
               </View>
             </View>
           </View>
         </View>
-      )}
     </ScrollView>
   );
 }
@@ -508,23 +518,26 @@ const styles = StyleSheet.create({
   formContainer: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 20,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    width: '100%',
   },
   inputRow: {
     flexDirection: 'row',
     marginBottom: 16,
-    gap: 12,
+    justifyContent: 'space-between',
   },
   halfInput: {
     flex: 1,
+    marginHorizontal: 6,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
+    width: '100%',
   },
   inputLabel: {
     fontSize: 14,
@@ -539,6 +552,8 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: '#F9FAFB',
+    minHeight: 48,
+    textAlignVertical: 'center',
   },
   saveButton: {
     backgroundColor: '#6366F1',
@@ -637,13 +652,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     fontSize: 16,
     backgroundColor: '#F9FAFB',
+    minHeight: 44,
+    textAlignVertical: 'center',
   },
   bloodPressureInputs: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
   slashText: {
     fontSize: 18,
@@ -731,39 +750,84 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   chartTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   chartBars: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-end',
-    height: 150,
-    marginBottom: 10,
+    height: 180,
+    marginVertical: 16,
+    paddingHorizontal: 10,
   },
   chartBarContainer: {
     alignItems: 'center',
   },
   chartBar: {
-    width: 24,
+    width: 28,
     backgroundColor: '#667eea',
-    marginBottom: 5,
-    borderRadius: 12,
+    marginVertical: 8,
+    borderRadius: 14,
+    minHeight: 30,
   },
   chartBarLabel: {
-    fontSize: 10,
-    color: '#6B7280',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    fontWeight: '500',
   },
   chartBarValue: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
     textAlign: 'center',
-    marginTop: 2,
+    marginBottom: 6,
+  },
+  chartGradient: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 20,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  noDataText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 12,
+  },
+  noDataSubtext: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
