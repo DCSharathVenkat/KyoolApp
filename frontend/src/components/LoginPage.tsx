@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { signInWithEmail } from '../api/user_api';
+import { Ionicons } from '@expo/vector-icons';
+import { signInWithEmail, signInWithGoogle } from '../api/user_api';
 
 interface LoginPageProps {
   navigation?: any;
@@ -40,6 +41,29 @@ export function LoginPage({ navigation }: LoginPageProps) {
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'Failed to log in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        Alert.alert('Success', 'Logged in successfully!', [
+          {
+            text: 'OK',
+            onPress: () => navigation?.navigate('Dashboard')
+          }
+        ]);
+      } else {
+        Alert.alert('Info', result.error || 'Google Sign-In is not available yet');
+      }
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      Alert.alert('Error', 'Failed to sign in with Google');
     } finally {
       setLoading(false);
     }
@@ -94,6 +118,21 @@ export function LoginPage({ navigation }: LoginPageProps) {
                   {loading ? 'Signing In...' : 'Sign In'}
                 </Text>
               </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.googleButton, loading && styles.buttonDisabled]}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
+            >
+              <Ionicons name="logo-google" size={20} color="#4285F4" />
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -194,6 +233,38 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#667eea',
     fontSize: 16,
+    fontWeight: '500',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E5EA',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 10,
+    marginBottom: 10,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    color: '#374151',
     fontWeight: '500',
   },
 });

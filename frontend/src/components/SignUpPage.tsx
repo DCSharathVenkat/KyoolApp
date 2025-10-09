@@ -109,11 +109,6 @@ export default function SignUpPage({ navigation }: SignUpPageProps) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.googleButton}>
-            <Ionicons name="logo-google" size={20} color="#4285F4" />
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity 
             style={styles.loginLink}
             onPress={() => {
@@ -211,23 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 10,
-    marginTop: 12,
-  },
-  googleButtonText: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
-  },
+
   loginLink: {
     alignItems: 'center',
     marginTop: 24,

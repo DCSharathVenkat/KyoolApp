@@ -1,7 +1,7 @@
 // Kyool App API Integration with FastAPI Backend
 // Backend deployed at: https://kyool-backend-606917950237.us-central1.run.app
 
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../firebase';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
@@ -171,5 +171,30 @@ export async function signInWithEmail(email, password) {
     }
     
     return { success: false, error: errorMessage };
+  }
+}
+
+// Sign in with Google
+export async function signInWithGoogle() {
+  try {
+    // Note: For React Native, you'll need to use a Google Sign-In library
+    // like @react-native-google-signin/google-signin
+    // This is a placeholder for the Google Sign-In functionality
+    
+    // For now, we'll return a placeholder response
+    // In a real implementation, you would:
+    // 1. Use Google Sign-In library to get authentication token
+    // 2. Create Firebase credential with the token
+    // 3. Sign in with Firebase using the credential
+    // 4. Create/update user in your backend
+    
+    console.log('Google Sign-In not yet implemented - requires Google Sign-In library setup');
+    return { 
+      success: false, 
+      error: 'Google Sign-In requires additional setup. Please use email/password for now.' 
+    };
+  } catch (error) {
+    console.error('Google Sign-In error:', error);
+    return { success: false, error: 'Failed to sign in with Google' };
   }
 }

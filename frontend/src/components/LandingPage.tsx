@@ -1,10 +1,12 @@
 // React Native Landing Page Component
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Ionicons } from '@expo/vector-icons';
+import { WaitlistCounter } from './WaitlistCounter';
+import { WaitlistDialog } from './WaitlistDialog';
 
 const { width } = Dimensions.get('window');
 
@@ -14,6 +16,8 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onLogin, onSignUp }: LandingPageProps) {
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  
   const features = [
     {
       icon: 'heart' as const,
@@ -91,13 +95,15 @@ export function LandingPage({ onLogin, onSignUp }: LandingPageProps) {
               Get Started Free
             </Button>
             <Button 
-              variant="outline" 
+              variant="outline"
               style={styles.secondaryButton}
               onPress={onLogin}
             >
               Sign In
             </Button>
           </View>
+
+          <WaitlistCounter />
 
           <View style={styles.heroStats}>
             <View style={styles.statItem}>
@@ -140,6 +146,45 @@ export function LandingPage({ onLogin, onSignUp }: LandingPageProps) {
         </View>
       </View>
 
+      {/* Waitlist Teaser Section */}
+      <View style={styles.waitlistSection}>
+        <View style={styles.waitlistCard}>
+          <View style={styles.waitlistBadge}>
+            <Ionicons name="star" size={16} color="#FF9500" />
+            <Text style={styles.waitlistBadgeText}>Early Access</Text>
+          </View>
+          
+          <Text style={styles.waitlistTitle}>Be Among the First to Experience Premium Health Tracking</Text>
+          <Text style={styles.waitlistDescription}>
+            Join our exclusive waitlist to get early access to advanced features, personalized AI coaching, and priority support.
+          </Text>
+          
+          <View style={styles.waitlistBenefits}>
+            <View style={styles.waitlistBenefit}>
+              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <Text style={styles.waitlistBenefitText}>Premium features free for 3 months</Text>
+            </View>
+            <View style={styles.waitlistBenefit}>
+              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <Text style={styles.waitlistBenefitText}>Personal AI health coach</Text>
+            </View>
+            <View style={styles.waitlistBenefit}>
+              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <Text style={styles.waitlistBenefitText}>Priority customer support</Text>
+            </View>
+          </View>
+          
+          <Button 
+            style={styles.waitlistCTA}
+            onPress={() => setShowWaitlist(true)}
+          >
+            Join Waitlist - It's Free!
+          </Button>
+          
+          <WaitlistCounter />
+        </View>
+      </View>
+
       {/* Benefits Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Why Choose KyoolApp?</Text>
@@ -173,6 +218,15 @@ export function LandingPage({ onLogin, onSignUp }: LandingPageProps) {
           >
             Get Started Now
           </Button>
+          
+          <Button 
+            variant="outline"
+            style={styles.ctaWaitlistButton}
+            onPress={() => setShowWaitlist(true)}
+          >
+            Join Early Access Waitlist
+          </Button>
+          
           <TouchableOpacity style={styles.ctaSecondaryButton} onPress={onLogin}>
             <Text style={styles.ctaSecondaryText}>Already have an account? Sign in</Text>
           </TouchableOpacity>
@@ -183,6 +237,12 @@ export function LandingPage({ onLogin, onSignUp }: LandingPageProps) {
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2025 KyoolApp. All rights reserved.</Text>
       </View>
+      
+      {/* Waitlist Dialog */}
+      <WaitlistDialog 
+        open={showWaitlist}
+        onOpenChange={setShowWaitlist}
+      />
     </ScrollView>
   );
 }
@@ -346,6 +406,10 @@ const styles = StyleSheet.create({
   ctaPrimaryButton: {
     minWidth: 200,
   },
+  ctaWaitlistButton: {
+    minWidth: 200,
+    marginTop: 12,
+  },
   ctaSecondaryButton: {
     padding: 8,
   },
@@ -363,5 +427,73 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: '#666',
+  },
+  // Waitlist styles
+  waitlistSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    backgroundColor: '#F8F9FA',
+  },
+  waitlistCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: 'center',
+  },
+  waitlistBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  waitlistBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF9500',
+    marginLeft: 4,
+  },
+  waitlistTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#1C1C1E',
+    marginBottom: 12,
+  },
+  waitlistDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  waitlistBenefits: {
+    alignSelf: 'stretch',
+    marginBottom: 24,
+  },
+  waitlistBenefit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  waitlistBenefitText: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    marginLeft: 12,
+    flex: 1,
+  },
+  waitlistCTA: {
+    minWidth: 250,
+    marginBottom: 16,
   },
 });
