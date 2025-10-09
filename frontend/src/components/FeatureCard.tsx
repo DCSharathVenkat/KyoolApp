@@ -1,84 +1,147 @@
-// AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
-// Manual fixes likely required: styles, icons, routing, third-party web-only APIs
 import React from 'react';
-import { View, Text, Image, ScrollView, TextInput, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
-import { Card } from './ui/card';
-import { LucideIcon } from 'lucide-react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FeatureCardProps {
-  icon: LucideIcon;
+  icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
   benefit: string;
-  colorScheme: string;
+  colorScheme: 'blue' | 'green' | 'purple' | 'orange';
+  onPress?: () => void;
 }
 
-export function FeatureCard({ icon: Icon, title, description, benefit, colorScheme }: FeatureCardProps) {
-  const getColorClasses = (scheme: string) => {
+export function FeatureCard({ icon, title, description, benefit, colorScheme, onPress }: FeatureCardProps) {
+  const getColorScheme = (scheme: string) => {
     switch (scheme) {
       case 'blue':
         return {
-          card: 'bg-gradient-to-br from-blue-50/80 to-blue-100/80 dark:from-blue-950/30 dark:to-blue-900/30',
-          iconBg: 'bg-blue-500/15',
-          iconColor: 'text-blue-600 dark:text-blue-400',
-          benefitBg: 'bg-blue-500/15',
-          benefitText: 'text-blue-700 dark:text-blue-300',
-          border: 'border-blue-200/50 dark:border-blue-800/50'
+          gradient: ['#EBF8FF', '#DBEAFE'] as const,
+          iconBg: '#3B82F6',
+          iconColor: '#FFFFFF',
+          titleColor: '#1E40AF',
+          descColor: '#6B7280',
+          benefitBg: '#EBF8FF',
+          benefitText: '#1E40AF',
+          borderColor: '#BFDBFE'
         };
       case 'green':
         return {
-          card: 'bg-gradient-to-br from-green-50/80 to-green-100/80 dark:from-green-950/30 dark:to-green-900/30',
-          iconBg: 'bg-green-500/15',
-          iconColor: 'text-green-600 dark:text-green-400',
-          benefitBg: 'bg-green-500/15',
-          benefitText: 'text-green-700 dark:text-green-300',
-          border: 'border-green-200/50 dark:border-green-800/50'
+          gradient: ['#F0FDF4', '#DCFCE7'] as const,
+          iconBg: '#10B981',
+          iconColor: '#FFFFFF',
+          titleColor: '#166534',
+          descColor: '#6B7280',
+          benefitBg: '#F0FDF4',
+          benefitText: '#166534',
+          borderColor: '#BBF7D0'
         };
       case 'purple':
         return {
-          card: 'bg-gradient-to-br from-purple-50/80 to-purple-100/80 dark:from-purple-950/30 dark:to-purple-900/30',
-          iconBg: 'bg-purple-500/15',
-          iconColor: 'text-purple-600 dark:text-purple-400',
-          benefitBg: 'bg-purple-500/15',
-          benefitText: 'text-purple-700 dark:text-purple-300',
-          border: 'border-purple-200/50 dark:border-purple-800/50'
+          gradient: ['#FAF5FF', '#F3E8FF'] as const,
+          iconBg: '#8B5CF6',
+          iconColor: '#FFFFFF',
+          titleColor: '#6B21A8',
+          descColor: '#6B7280',
+          benefitBg: '#FAF5FF',
+          benefitText: '#6B21A8',
+          borderColor: '#D8B4FE'
         };
       case 'orange':
         return {
-          card: 'bg-gradient-to-br from-orange-50/80 to-orange-100/80 dark:from-orange-950/30 dark:to-orange-900/30',
-          iconBg: 'bg-orange-500/15',
-          iconColor: 'text-orange-600 dark:text-orange-400',
-          benefitBg: 'bg-orange-500/15',
-          benefitText: 'text-orange-700 dark:text-orange-300',
-          border: 'border-orange-200/50 dark:border-orange-800/50'
+          gradient: ['#FFF7ED', '#FFEDD5'] as const,
+          iconBg: '#F97316',
+          iconColor: '#FFFFFF',
+          titleColor: '#C2410C',
+          descColor: '#6B7280',
+          benefitBg: '#FFF7ED',
+          benefitText: '#C2410C',
+          borderColor: '#FED7AA'
         };
       default:
         return {
-          card: 'bg-gradient-to-br from-background to-muted/30',
-          iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
-          benefitBg: 'bg-primary/5',
-          benefitText: 'text-primary',
-          border: 'border-primary/10'
+          gradient: ['#F9FAFB', '#F3F4F6'] as const,
+          iconBg: '#6366F1',
+          iconColor: '#FFFFFF',
+          titleColor: '#374151',
+          descColor: '#6B7280',
+          benefitBg: '#F9FAFB',
+          benefitText: '#6366F1',
+          borderColor: '#E5E7EB'
         };
     }
   };
 
-  const colors = getColorClasses(colorScheme);
+  const colors = getColorScheme(colorScheme);
 
   return (
-    <Card ${colors.card} shadow-lg relative overflow-hidden group`}>
-      <View />
-      <View>
-        <View rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}>
-          <Icon`} />
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.container}>
+      <LinearGradient colors={colors.gradient} style={styles.card}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.iconBg }]}>
+          <Ionicons name={icon} size={28} color={colors.iconColor} />
         </View>
-        <h3>{title}</h3>
-        <Text>{description}</Text>
-        <View rounded-xl p-4 border ${colors.border}`}>
-          <Text font-medium`}>✓ {benefit}</Text>
+        
+        <Text style={[styles.title, { color: colors.titleColor }]}>{title}</Text>
+        <Text style={[styles.description, { color: colors.descColor }]}>{description}</Text>
+        
+        <View style={[styles.benefitContainer, { 
+          backgroundColor: colors.benefitBg,
+          borderColor: colors.borderColor 
+        }]}>
+          <Text style={[styles.benefitText, { color: colors.benefitText }]}>✓ {benefit}</Text>
         </View>
-      </View>
-    </Card>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    marginHorizontal: 8,
+    marginVertical: 8,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    minHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  benefitContainer: {
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    marginTop: 'auto',
+  },
+  benefitText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});

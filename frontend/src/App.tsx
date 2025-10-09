@@ -12,7 +12,6 @@ import {
   Modal
 } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { WaitlistDialog } from './components/WaitlistDialog';
@@ -28,6 +27,17 @@ import { FitnessTracker } from './components/FitnessTracker';
 import { DeviceConnections } from './components/DeviceConnections';
 import { Profile } from './components/Profile';
 
+// Import screen components
+import { Dashboard } from './components/Dashboard';
+import { LandingPage } from './components/LandingPage';
+import { LoginPage } from './components/LoginPage';
+import SignUpPage from './components/SignUpPage';
+
+// Import additional screen components
+import { ActivityFeed } from './components/ActivityFeed';
+import { FindDietician } from './components/FindDietician';
+import { RealTimeCoaching } from './components/RealTimeCoaching';
+
 // Firebase imports
 import { auth } from "./firebase";
 import { getUserByEmail } from "./api/user_api";
@@ -40,407 +50,44 @@ const { width, height } = Dimensions.get('window');
 
 // Home/Landing Screen
 function HomeScreen({ navigation }: any) {
-  const [waitlistVisible, setWaitlistVisible] = useState(false);
-  const [testVisible, setTestVisible] = useState(false);
-  const [debugVisible, setDebugVisible] = useState(false);
-
-  const features = [
-    {
-      icon: 'person',
-      title: "Executive-Focused",
-      description: "Designed specifically for busy leaders and decision-makers",
-      benefit: "Tailored to C-suite demands and executive lifestyles",
-    },
-    {
-      icon: 'time',
-      title: "Time-Efficient",
-      description: "Solutions that work around your schedule, not against it",
-      benefit: "5-minute routines that deliver noticeable results",
-    },
-    {
-      icon: 'trending-up',
-      title: "Performance-Driven",
-      description: "Boost your energy, focus, and leadership impact",
-      benefit: "Measurable improvements in decision-making and productivity",
-    },
-    {
-      icon: 'people',
-      title: "Specialized Support",
-      description: "Practical insights shaped by real executive challenges",
-      benefit: "Access to early executive community insights & resources",
-    },
-  ];
-
-  const stats = [
-    { icon: "⚖️", number: "78%", label: "of executives struggle with work-life balance" },
-    { icon: "⚡", number: "65%", label: "face chronic stress and burnout daily" },
-    { icon: "🍽️", number: "52%", label: "regularly skip meals due to meetings" },
-    { icon: "⏳", number: "43%", label: "average less than 6 hours of sleep" },
-  ];
-
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Section */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.hero}
-      >
-        <View style={styles.heroContent}>
-          <View style={styles.badge}>
-            <Ionicons name="sparkles" size={16} color="#fff" />
-            <Text style={styles.badgeText}>Coming Soon • Limited Early Access</Text>
-          </View>
-          
-          <Text style={styles.heroTitle}>
-            Your Health.{'\n'}Your Success.{'\n'}Simplified.
-          </Text>
-
-          <Text style={styles.heroSubtitle}>
-            The first lifestyle app designed exclusively for executives who refuse to compromise their health for success.
-          </Text>
-
-          <Text style={styles.heroDescription}>
-            Transform your wellbeing without sacrificing your career.
-          </Text>
-
-          <View style={styles.spotsBadge}>
-            <Text style={styles.spotsText}>
-              ⚡ Spots are limited • Join 237 executives on the waitlist
-            </Text>
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.primaryButton]}
-              onPress={() => setWaitlistVisible(true)}
-            >
-              <Text style={styles.buttonText}>Get Early Access</Text>
-              <Ionicons name="chevron-forward" size={20} color="#fff" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.dashboardButton]}
-              onPress={() => navigation.navigate('Dashboard')}
-            >
-              <Ionicons name="grid" size={20} color="#667eea" />
-              <Text style={[styles.buttonText, styles.dashboardButtonText]}>View Dashboard</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.secondaryButton]}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>Get Started</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.disclaimer}>
-            No spam, ever. Unsubscribe anytime.
-          </Text>
-        </View>
-      </LinearGradient>
-
-      {/* Stats Section */}
-      <View style={styles.statsSection}>
-        <View style={styles.sectionBadge}>
-          <Text style={styles.sectionBadgeText}>Critical Health Data</Text>
-        </View>
-        <Text style={styles.sectionTitle}>The Executive Health Crisis is Real</Text>
-        <Text style={styles.sectionDescription}>
-          Corporate success shouldn't come at the cost of your health. The data reveals a troubling reality about executive wellness that demands immediate attention.
-        </Text>
-
-        <View style={styles.statsGrid}>
-          {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={styles.statIcon}>{stat.icon}</Text>
-              <Text style={styles.statNumber}>{stat.number}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.statsSummary}>
-          <Text style={styles.statsSummaryTitle}>It doesn't have to be this way.</Text>
-          <Text style={styles.statsSummaryText}>
-            KyoolApp is designed to break this cycle and restore balance to executive life.
-          </Text>
-        </View>
-      </View>
-
-      {/* Features Section */}
-      <View style={styles.featuresSection}>
-        <View style={styles.sectionBadge}>
-          <Ionicons name="person" size={16} color="#667eea" />
-          <Text style={[styles.sectionBadgeText, { color: '#667eea' }]}>Our Approach</Text>
-        </View>
-        <Text style={styles.sectionTitle}>Built for Your Reality</Text>
-        <Text style={styles.sectionDescription}>
-          KyoolApp understands the unique challenges of executive life. We create health solutions that adapt to your schedule — not the other way around.
-        </Text>
-
-        <View style={styles.featuresGrid}>
-          {features.map((feature, index) => (
-            <View key={index} style={styles.featureCard}>
-              <View style={styles.featureIconContainer}>
-                <Ionicons name={feature.icon as any} size={24} color="#667eea" />
-              </View>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
-              <Text style={styles.featureDescription}>{feature.description}</Text>
-              <Text style={styles.featureBenefit}>{feature.benefit}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* CTA Section */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.ctaSection}
-      >
-        <Text style={styles.ctaTitle}>Your Health. Your Edge.</Text>
-        <View style={styles.ctaStats}>
-          <Text style={styles.ctaStatsText}>237 executives already on the waitlist</Text>
-        </View>
-
-        <View style={styles.benefitsList}>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.benefitText}>Priority Coaching Access</Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.benefitText}>1-Month Free Trial</Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.benefitText}>Lifetime Discount</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.ctaButton}
-          onPress={() => setWaitlistVisible(true)}
-        >
-          <Text style={styles.ctaButtonText}>Join the Waitlist</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.ctaButton, { backgroundColor: '#ff6b6b', marginTop: 10 }]}
-          onPress={() => setTestVisible(true)}
-        >
-          <Text style={styles.ctaButtonText}>Test TextInput Modal</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.ctaButton, { backgroundColor: '#10B981', marginTop: 10 }]}
-          onPress={() => navigation.navigate('TextTest')}
-        >
-          <Text style={styles.ctaButtonText}>Test TextInput Screen</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.ctaButton, { backgroundColor: '#8B5CF6', marginTop: 10 }]}
-          onPress={() => setDebugVisible(true)}
-        >
-          <Text style={styles.ctaButtonText}>Debug TextInput</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-
-      <WaitlistDialog 
-        open={waitlistVisible} 
-        onOpenChange={setWaitlistVisible} 
-      />
-      
-      <SimpleTextInputTest 
-        visible={testVisible} 
-        onClose={() => setTestVisible(false)} 
-      />
-      
-      <DebugTextInput 
-        visible={debugVisible} 
-        onClose={() => setDebugVisible(false)} 
-      />
-    </ScrollView>
-  );
+  return <LandingPage onLogin={() => navigation.navigate('Login')} onSignUp={() => navigation.navigate('SignUp')} />;
 }
+
+
 
 // Login Screen
 function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleGoogleSignIn = () => {
-    Alert.alert('Google Sign In', 'Google authentication will be implemented here');
-  };
-
-  const handleEmailSignIn = () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-    // Navigate to Dashboard for demo
-    navigation.navigate('Dashboard');
-  };
-
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.authContent}>
-      <View style={styles.authHeader}>
-        <Text style={styles.authTitle}>Welcome Back</Text>
-        <Text style={styles.authSubtitle}>Sign in to continue your health journey</Text>
-      </View>
-
-      <View style={styles.authForm}>
-        <TextInput
-          style={styles.authInput}
-          placeholder="Email Address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.authInput}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <TouchableOpacity style={styles.authButton} onPress={handleEmailSignIn}>
-          <Text style={styles.authButtonText}>Sign In</Text>
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
-          <FontAwesome5 name="google" size={20} color="#fff" />
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.linkText}>
-            Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+  return <LoginPage />;
 }
 
 // Sign Up Screen
 function SignUpScreen({ navigation }: any) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleSignUp = () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-    Alert.alert('Success', 'Account created successfully!', [
-      { text: 'OK', onPress: () => navigation.navigate('Dashboard') }
-    ]);
-  };
-
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.authContent}>
-      <View style={styles.authHeader}>
-        <Text style={styles.authTitle}>Create Account</Text>
-        <Text style={styles.authSubtitle}>Join the executive health revolution</Text>
-      </View>
-
-      <View style={styles.authForm}>
-        <TextInput
-          style={styles.authInput}
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-        />
-
-        <TextInput
-          style={styles.authInput}
-          placeholder="Email Address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.authInput}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <TouchableOpacity style={styles.authButton} onPress={handleSignUp}>
-          <Text style={styles.authButtonText}>Create Account</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.linkText}>
-            Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+  return <SignUpPage />;
 }
+
+
 
 // Dashboard Screen
 function DashboardScreen({ navigation }: any) {
-  const dashboardItems = [
-    { title: 'Health Metrics', subtitle: 'Track vital signs', icon: 'heart', screen: 'Health', color: '#ff6b6b' },
-    { title: 'Water Tracker', subtitle: 'Stay hydrated', icon: 'water', screen: 'Water', color: '#4ecdc4' },
-    { title: 'Recipe Search', subtitle: 'Healthy meals', icon: 'restaurant', screen: 'Recipes', color: '#45b7d1' },
-    { title: 'Fitness Tracker', subtitle: 'Track workouts', icon: 'fitness', screen: 'Fitness', color: '#96ceb4' },
-    { title: 'Device Sync', subtitle: 'Connect devices', icon: 'phone-portrait', screen: 'Devices', color: '#ffeaa7' },
-    { title: 'Profile', subtitle: 'Account settings', icon: 'person', screen: 'Profile', color: '#dda0dd' },
-  ];
+  const user = {
+    id: 'demo-user-123',
+    name: 'Demo User',
+    email: 'demo@example.com',
+    height: 180,
+    weight: 75,
+    age: 30,
+    dailyWaterGoal: 8,
+    currentWater: 5,
+    dailySteps: 8432,
+    stepGoal: 10000,
+    workoutStreak: 7,
+    healthScore: 85
+  };
 
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.dashboardHeader}
-      >
-        <Text style={styles.dashboardWelcome}>Welcome back!</Text>
-        <Text style={styles.dashboardSubtext}>Ready to optimize your health today?</Text>
-      </LinearGradient>
-
-      <View style={styles.dashboardContent}>
-        <Text style={styles.dashboardSectionTitle}>Your Health Dashboard</Text>
-        
-        <View style={styles.dashboardGrid}>
-          {dashboardItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={[styles.dashboardCard, { borderLeftColor: item.color }]}
-              onPress={() => navigation.navigate(item.screen)}
-            >
-              <View style={[styles.dashboardCardIcon, { backgroundColor: item.color }]}>
-                <Ionicons name={item.icon as any} size={24} color="#fff" />
-              </View>
-              <View style={styles.dashboardCardContent}>
-                <Text style={styles.dashboardCardTitle}>{item.title}</Text>
-                <Text style={styles.dashboardCardSubtitle}>{item.subtitle}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#ccc" />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    </ScrollView>
-  );
+  return <Dashboard user={user} />;
 }
+
+
 
 // Feature Screens - React Native implementations inspired by existing components
 function HealthScreen() {
@@ -521,6 +168,51 @@ function ProfileScreen() {
   return <Profile user={user} setUser={setUser} />;
 }
 
+// Additional Screen Components
+function ActivityScreen() {
+  const [user] = useState({
+    id: 'demo-user-123',
+    name: 'Demo User',
+    email: 'demo@example.com',
+    height: 180, 
+    weight: 75, 
+    age: 35, 
+    gender: 'male',
+    activityLevel: 'moderately_active'
+  });
+
+  return <ActivityFeed user={user} onViewAllFriends={() => {}} onStartWorkout={() => {}} />;
+}
+
+function DieticianScreen() {
+  const [user] = useState({
+    id: 'demo-user-123',
+    name: 'Demo User',
+    email: 'demo@example.com',
+    height: 180, 
+    weight: 75, 
+    age: 35, 
+    gender: 'male',
+    activityLevel: 'moderately_active'
+  });
+
+  return <FindDietician user={user} />;
+}
+
+function CoachingScreen() {
+  const [isWorkoutActive, setIsWorkoutActive] = useState(true);
+
+  return (
+    <RealTimeCoaching 
+      isWorkoutActive={isWorkoutActive}
+      currentExercise="Push-ups"
+      onWorkoutPause={() => setIsWorkoutActive(false)}
+      onWorkoutResume={() => setIsWorkoutActive(true)}
+      onExerciseChange={(exercise) => console.log('Exercise changed to:', exercise)}
+    />
+  );
+}
+
 // Main App Component
 export default function App() {
   return (
@@ -590,6 +282,21 @@ export default function App() {
         name="TextTest" 
         component={MinimalTextTest} 
         options={{ title: 'Text Input Test' }}
+      />
+      <Stack.Screen 
+        name="Activity" 
+        component={ActivityScreen} 
+        options={{ title: 'Activity Feed' }}
+      />
+      <Stack.Screen 
+        name="Dietician" 
+        component={DieticianScreen} 
+        options={{ title: 'Find Dietician' }}
+      />
+      <Stack.Screen 
+        name="Coaching" 
+        component={CoachingScreen} 
+        options={{ title: 'Real-Time Coaching' }}
       />
     </Stack.Navigator>
   );

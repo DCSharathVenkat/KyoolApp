@@ -1,6 +1,6 @@
 // AUTO-GENERATED-TO-NATIVE: This file was created by tools/convert-web-to-native.js
 // Manual fixes likely required: styles, icons, routing, third-party web-only APIs
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, TextInput, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
