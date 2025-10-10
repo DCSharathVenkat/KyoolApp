@@ -35,6 +35,9 @@ Thumbs.db
 projectroughtexts.txt
 
 
+##expo  
+frontend/.expo/
+
 ##Keys
 backend/keys/
 
