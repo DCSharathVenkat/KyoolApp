@@ -174,27 +174,63 @@ export async function signInWithEmail(email, password) {
   }
 }
 
-// Sign in with Google
+// Sign in with Google using Expo Auth Session
 export async function signInWithGoogle() {
   try {
-    // Note: For React Native, you'll need to use a Google Sign-In library
-    // like @react-native-google-signin/google-signin
-    // This is a placeholder for the Google Sign-In functionality
+    console.log('🚀 Starting Google Sign-In with Expo Auth Session...');
     
-    // For now, we'll return a placeholder response
-    // In a real implementation, you would:
-    // 1. Use Google Sign-In library to get authentication token
-    // 2. Create Firebase credential with the token
-    // 3. Sign in with Firebase using the credential
-    // 4. Create/update user in your backend
+    // Import the helper function from our Google Auth hook
+    const { signInWithGoogleWeb } = await import('../hooks/useGoogleAuth');
+    const result = await signInWithGoogleWeb();
     
-    console.log('Google Sign-In not yet implemented - requires Google Sign-In library setup');
+    if (result.success && result.user) {
+      // Sync user with backend
+      try {
+        const response = await fetch(`${BASE_URL}/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${result.user.token}`
+          },
+          body: JSON.stringify({
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            photoURL: result.user.photoURL,
+            provider: 'google'
+          })
+        });
+        
+        if (response.ok) {
+          const backendUser = await response.json();
+          console.log('✅ Google Sign-In successful with backend sync');
+          
+          return {
+            success: true,
+            user: {
+              ...result.user,
+              backendData: backendUser
+            }
+          };
+        } else {
+          console.warn('⚠️ Backend sync failed, but Firebase auth succeeded');
+        }
+      } catch (backendError) {
+        console.warn('⚠️ Backend error:', backendError.message);
+      }
+      
+      // Return success even if backend fails
+      return result;
+    }
+    
+    // Return the error from the hook
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Google Sign-In error:', error);
     return { 
       success: false, 
-      error: 'Google Sign-In requires additional setup. Please use email/password for now.' 
+      error: 'Google Sign-In failed. Please try again or use email/password authentication.' 
     };
-  } catch (error) {
-    console.error('Google Sign-In error:', error);
-    return { success: false, error: 'Failed to sign in with Google' };
   }
 }
