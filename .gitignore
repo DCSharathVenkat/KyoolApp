@@ -41,4 +41,9 @@ frontend/.expo/
 ##Keys
 backend/keys/
 
+##Expo
+frontend/.expo/
+.idea/
+
+.expo/
 code.txt

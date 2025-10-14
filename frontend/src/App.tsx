@@ -27,7 +27,7 @@ import { Profile } from './components/Profile';
 // Import screen components
 import { Dashboard } from './components/Dashboard';
 import { LandingPage } from './components/LandingPage';
-import { LoginPage } from './components/LoginPage';
+import { LoginPageImproved } from './components/LoginPageImproved';
 import SignUpPage from './components/SignUpPage';
 
 // Import additional screen components
@@ -36,7 +36,7 @@ import { FindDietician } from './components/FindDietician';
 import { RealTimeCoaching } from './components/RealTimeCoaching';
 
 // Firebase imports
-import { auth } from "./firebase";
+import app, { auth } from "./firebase";
 import { getUserByEmail } from "./api/user_api";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
@@ -54,7 +54,7 @@ function HomeScreen({ navigation }: any) {
 
 // Login Screen
 function LoginScreen({ navigation }: any) {
-  return <LoginPage navigation={navigation} />;
+  return <LoginPageImproved navigation={navigation} />;
 }
 
 // Sign Up Screen

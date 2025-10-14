@@ -174,31 +174,36 @@ export async function signInWithEmail(email, password) {
   }
 }
 
-// Sign in with Google using Expo Auth Session
+// Sign in with Google - unified function for all platforms
 export async function signInWithGoogle() {
   try {
-    console.log('🚀 Starting Google Sign-In with Expo Auth Session...');
+    console.log('🚀 Starting Google Sign-In API call...');
     
-    // Import the helper function from our Google Auth hook
-    const { signInWithGoogleWeb } = await import('../hooks/useGoogleAuth');
-    const result = await signInWithGoogleWeb();
+    // Import the direct Google Auth function
+    const { signInWithGoogleDirect } = await import('../hooks/useGoogleAuth');
+    const result = await signInWithGoogleDirect();
     
     if (result.success && result.user) {
+      console.log('🔄 Syncing Google user with backend...');
+      
       // Sync user with backend
       try {
+        const userData = {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          photoURL: result.user.photoURL,
+          provider: 'google',
+          createdAt: new Date().toISOString()
+        };
+
         const response = await fetch(`${BASE_URL}/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${result.user.token}`
           },
-          body: JSON.stringify({
-            id: result.user.id,
-            email: result.user.email,
-            name: result.user.name,
-            photoURL: result.user.photoURL,
-            provider: 'google'
-          })
+          body: JSON.stringify(userData)
         });
         
         if (response.ok) {
@@ -208,7 +213,11 @@ export async function signInWithGoogle() {
           return {
             success: true,
             user: {
-              ...result.user,
+              uid: result.user.id,
+              email: result.user.email,
+              name: result.user.name,
+              photoURL: result.user.photoURL,
+              token: result.user.token,
               backendData: backendUser
             }
           };
@@ -219,15 +228,24 @@ export async function signInWithGoogle() {
         console.warn('⚠️ Backend error:', backendError.message);
       }
       
-      // Return success even if backend fails
-      return result;
+      // Return success even if backend fails (Firebase auth succeeded)
+      return {
+        success: true,
+        user: {
+          uid: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          photoURL: result.user.photoURL,
+          token: result.user.token
+        }
+      };
     }
     
-    // Return the error from the hook
+    // Return the error from the Google auth
     return result;
     
   } catch (error) {
-    console.error('❌ Google Sign-In error:', error);
+    console.error('❌ Google Sign-In API error:', error);
     return { 
       success: false, 
       error: 'Google Sign-In failed. Please try again or use email/password authentication.' 

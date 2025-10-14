@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "KyoolApp",
-    "slug": "kyoolapp",
+    "slug": "healthhub",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "scheme": "kyoolapp",
+    "scheme": "kyoolapphealthhub",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#667eea"
@@ -15,18 +15,24 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kyoolapp.executive"
+      "bundleIdentifier": "com.kyoolapp.healthhub"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#667eea"
       },
-      "package": "com.kyoolapp.executive"
+      "package": "com.kyoolapp.healthhub"
     },
-    "web": {
-    },
+    "web": {},
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4e3bbc1c-19f8-46ae-9d9d-29dad5c71b00"
+      }
+    },
+    "owner": "vcky8702"
   }
 }

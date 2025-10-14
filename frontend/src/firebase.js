@@ -1,16 +1,17 @@
 // Real Firebase Configuration for KyoolApp with Google Authentication
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, initializeAuth, getReactNativePersistence, GoogleAuthProvider, signInWithCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, initializeAuth, getReactNativePersistence, GoogleAuthProvider, signInWithCredential, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Firebase configuration - Replace with your actual Firebase project credentials
+// Firebase configuration from environment variables
 export const firebaseConfig = {
-  apiKey: "AIzaSyBqE8nX-lN9V8YwE9uYvN9sQhR7_Wg4nzA",
-  authDomain: "lifestyle-health-kyool.firebaseapp.com",
-  projectId: "lifestyle-health-kyool",
-  storageBucket: "lifestyle-health-kyool.appspot.com",
-  messagingSenderId: "606917950237",
-  appId: "1:606917950237:web:a1b2c3d4e5f6g7h8i9j0k1"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_MEASUREMENT_ID
 };
 
 // Initialize Firebase App (only if not already initialized)
@@ -54,6 +55,7 @@ export { auth };
 export { 
   GoogleAuthProvider,
   signInWithCredential,
+  signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   firebaseSignOut,

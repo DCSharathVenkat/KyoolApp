@@ -4,10 +4,10 @@ import os
 import json
 import re
 
-#key_path = 'keys/lifestyle-health-kyool-firebase-adminsdk-fbsvc-08bd67c569.json'  # Default path if env var not set
+secret_keys = 'keys/lifestyle-health-kyool-firebase-adminsdk-fbsvc-08bd67c569.json'  # Default path if env var not set
 # Use environment variable for service account key path, default to Cloud Run secret mount path
-secret_keys = os.environ.get("FIREBASE_KEY_PATH")
-print(f"Using FIREBASE_KEY_PATH env value: {bool(secret_keys)}")
+#secret_keys = os.environ.get("FIREBASE_KEY_PATH")
+#print(f"Using FIREBASE_KEY_PATH env value: {bool(secret_keys)}")
 
 # FIREBASE_KEY_PATH can be either:
 # - a filesystem path to the service account json file, or
