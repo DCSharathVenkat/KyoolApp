@@ -21,13 +21,37 @@
       "adaptiveIcon": {
         "backgroundColor": "#667eea"
       },
-      "package": "com.kyoolapp.healthhub"
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.kyoolapp.healthhub",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
-    "web": {},
+    "web": {
+       "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
     "plugins": [
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#667eea",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "placement": "center"
+        }
+      ]
     ],
+    "developmentClient": {
+      "silentLaunch": true
+    },
     "extra": {
       "eas": {
         "projectId": "4e3bbc1c-19f8-46ae-9d9d-29dad5c71b00"

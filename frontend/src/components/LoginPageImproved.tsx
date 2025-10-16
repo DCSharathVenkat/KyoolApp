@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView, TextInput, TouchableOpacity, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SimpleGradient } from './ui/SimpleGradient';
 import { Ionicons } from '@expo/vector-icons';
 import { signInWithEmail } from '../api/user_api';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -89,7 +89,7 @@ export function LoginPageImproved({ navigation }: LoginPageProps) {
   };
 
   return (
-    <LinearGradient
+    <SimpleGradient
       colors={['#667eea', '#764ba2']}
       style={styles.container}
     >
@@ -197,7 +197,7 @@ export function LoginPageImproved({ navigation }: LoginPageProps) {
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </SimpleGradient>
   );
 }
 

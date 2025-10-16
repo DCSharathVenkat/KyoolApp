@@ -40,10 +40,23 @@ frontend/.expo/
 
 ##Keys
 backend/keys/
+*.json.backup
 
 ##Expo
 frontend/.expo/
 .idea/
+
+##Android Build Files
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/app/.cxx/
+frontend/android/local.properties
+frontend/android/.kotlin/
+frontend/android/app/debug.keystore
+
+##Google Services (contains sensitive data)
+frontend/android/app/google-services.json
 
 .expo/
 code.txt

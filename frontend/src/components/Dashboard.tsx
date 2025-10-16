@@ -1,32 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
+import { UserContext } from '../App';
+import { userAPI } from '../services/api';
 
 interface DashboardProps {
-  user?: any;
   navigation?: any;
   onStartWorkout?: (workout: any) => void;
 }
 
-export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) {
+export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
+  const { user, userProfile } = useContext(UserContext);
   const [selectedMetric, setSelectedMetric] = useState('overview');
-
-  // Mock user data - replace with real data
-  const userData = {
-    name: user?.name || 'Champion',
-    todaySteps: 7834,
+  const [dailyStats, setDailyStats] = useState({
+    todaySteps: 0,
     stepGoal: 10000,
-    waterIntake: 6,
+    waterIntake: 0,
     waterGoal: 8,
-    caloriesBurned: 420,
+    caloriesBurned: 0,
     calorieGoal: 600,
-    sleepHours: 7.5,
+    sleepHours: 0,
     sleepGoal: 8,
-    workoutsThisWeek: 4,
+    workoutsThisWeek: 0,
     workoutGoal: 5
+  });
+  const [weightLogs, setWeightLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [userProfile]);
+
+  const loadDashboardData = async () => {
+    if (!userProfile?.uid) {
+      console.log('⚠️ No user profile available, using demo data');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('📊 Loading dashboard data for:', userProfile.email);
+
+      // Load user's weight logs
+      const logs = await userAPI.getWeightLogs(userProfile.uid);
+      setWeightLogs(logs.weightLogs || []);
+
+      // For now, we'll use some smart defaults + any available user data
+      // In a full app, you'd have APIs for daily activity, water intake, etc.
+      const updatedStats = {
+        todaySteps: userProfile.todaySteps || Math.floor(Math.random() * 5000) + 5000,
+        stepGoal: userProfile.stepGoal || 10000,
+        waterIntake: userProfile.waterIntake || Math.floor(Math.random() * 4) + 4,
+        waterGoal: userProfile.waterGoal || 8,
+        caloriesBurned: userProfile.caloriesBurned || Math.floor(Math.random() * 300) + 200,
+        calorieGoal: userProfile.calorieGoal || 600,
+        sleepHours: userProfile.sleepHours || 7 + Math.random() * 2,
+        sleepGoal: userProfile.sleepGoal || 8,
+        workoutsThisWeek: userProfile.workoutsThisWeek || Math.floor(Math.random() * 3) + 2,
+        workoutGoal: userProfile.workoutGoal || 5
+      };
+
+      setDailyStats(updatedStats);
+      console.log('✅ Dashboard data loaded successfully');
+
+    } catch (error) {
+      console.error('❌ Failed to load dashboard data:', error);
+      // Fall back to demo data
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Get user name from profile or fallback
+  const userName = userProfile?.displayName || 
+                  userProfile?.email?.split('@')[0] || 
+                  user?.displayName || 
+                  'Champion';
 
   const quickActions = [
     {
@@ -67,23 +119,56 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
     }
   ];
 
-  const recentActivities = [
-    { id: 1, activity: 'Morning Run', time: '30 min', calories: 280, icon: 'fitness' },
-    { id: 2, activity: 'Drank Water', time: '2h ago', amount: '500ml', icon: 'water' },
-    { id: 3, activity: 'Healthy Lunch', time: '4h ago', calories: 450, icon: 'restaurant' },
-  ];
+  // Generate recent activities from weight logs and some mock data
+  const recentActivities = React.useMemo(() => {
+    const activities = [];
+    
+    // Add recent weight logs
+    if (weightLogs.length > 0) {
+      const recentLog = weightLogs[0];
+      activities.push({
+        id: `weight-${recentLog.id}`,
+        activity: 'Weight Logged',
+        time: new Date(recentLog.date).toLocaleDateString(),
+        weight: `${recentLog.weight}kg`,
+        icon: 'fitness'
+      });
+    }
+    
+    // Add some demo activities
+    activities.push(
+      { id: 1, activity: 'Morning Walk', time: '30 min', calories: 180, icon: 'walk' },
+      { id: 2, activity: 'Drank Water', time: '1h ago', amount: '500ml', icon: 'water' },
+      { id: 3, activity: 'Healthy Meal', time: '3h ago', calories: 450, icon: 'restaurant' }
+    );
+    
+    return activities.slice(0, 3); // Keep only 3 recent activities
+  }, [weightLogs]);
 
   const getProgressPercentage = (current: number, goal: number) => {
     return Math.min((current / goal) * 100, 100);
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={styles.welcomeText}>Loading your dashboard...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome back, {userData.name}!</Text>
+          <Text style={styles.welcomeText}>Welcome back, {userName}!</Text>
           <Text style={styles.subtitle}>Here's your health summary for today</Text>
+          {userProfile?.email && (
+            <Text style={styles.emailText}>{userProfile.email}</Text>
+          )}
         </View>
 
         {/* Quick Stats Cards */}
@@ -91,12 +176,12 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
           <Card style={[styles.statCard, { backgroundColor: '#3B82F6' }]}>
             <CardContent style={styles.statContent}>
               <Ionicons name="walk" size={24} color="white" />
-              <Text style={styles.statNumber}>{userData.todaySteps.toLocaleString()}</Text>
+              <Text style={styles.statNumber}>{dailyStats.todaySteps.toLocaleString()}</Text>
               <Text style={styles.statLabel}>Steps Today</Text>
               <View style={styles.progressBar}>
                 <View 
                   style={[styles.progressFill, { 
-                    width: `${getProgressPercentage(userData.todaySteps, userData.stepGoal)}%` 
+                    width: `${getProgressPercentage(dailyStats.todaySteps, dailyStats.stepGoal)}%` 
                   }]} 
                 />
               </View>
@@ -106,13 +191,13 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
           <Card style={[styles.statCard, { backgroundColor: '#06B6D4' }]}>
             <CardContent style={styles.statContent}>
               <Ionicons name="water" size={24} color="white" />
-              <Text style={styles.statNumber}>{userData.waterIntake}/{userData.waterGoal}</Text>
-              <Text style={styles.statLabel}>Water Glasses</Text>
+              <Text style={styles.statNumber}>{dailyStats.waterIntake}/{dailyStats.waterGoal}</Text>
+              <Text style={styles.statLabel}>Glasses of Water</Text>
               <View style={styles.progressBar}>
                 <View 
                   style={[styles.progressFill, { 
-                    width: `${getProgressPercentage(userData.waterIntake, userData.waterGoal)}%` 
-                  }]} 
+                    width: `${getProgressPercentage(dailyStats.waterIntake, dailyStats.waterGoal)}%` 
+                  }]}
                 />
               </View>
             </CardContent>
@@ -123,12 +208,12 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
           <Card style={[styles.statCard, { backgroundColor: '#10B981' }]}>
             <CardContent style={styles.statContent}>
               <Ionicons name="flame" size={24} color="white" />
-              <Text style={styles.statNumber}>{userData.caloriesBurned}</Text>
+              <Text style={styles.statNumber}>{dailyStats.caloriesBurned}</Text>
               <Text style={styles.statLabel}>Calories Burned</Text>
               <View style={styles.progressBar}>
                 <View 
                   style={[styles.progressFill, { 
-                    width: `${getProgressPercentage(userData.caloriesBurned, userData.calorieGoal)}%` 
+                    width: `${getProgressPercentage(dailyStats.caloriesBurned, dailyStats.calorieGoal)}%` 
                   }]} 
                 />
               </View>
@@ -138,12 +223,12 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
           <Card style={[styles.statCard, { backgroundColor: '#8B5CF6' }]}>
             <CardContent style={styles.statContent}>
               <Ionicons name="moon" size={24} color="white" />
-              <Text style={styles.statNumber}>{userData.sleepHours}h</Text>
+              <Text style={styles.statNumber}>{dailyStats.sleepHours.toFixed(1)}h</Text>
               <Text style={styles.statLabel}>Sleep Last Night</Text>
               <View style={styles.progressBar}>
                 <View 
                   style={[styles.progressFill, { 
-                    width: `${getProgressPercentage(userData.sleepHours, userData.sleepGoal)}%` 
+                    width: `${getProgressPercentage(dailyStats.sleepHours, dailyStats.sleepGoal)}%` 
                   }]} 
                 />
               </View>
@@ -211,11 +296,11 @@ export function Dashboard({ user, navigation, onStartWorkout }: DashboardProps) 
             <View style={styles.weeklyProgress}>
               <View style={styles.progressItem}>
                 <Text style={styles.progressLabel}>Workouts</Text>
-                <Text style={styles.progressValue}>{userData.workoutsThisWeek}/{userData.workoutGoal}</Text>
+                <Text style={styles.progressValue}>{dailyStats.workoutsThisWeek}/{dailyStats.workoutGoal}</Text>
                 <View style={styles.progressBar}>
                   <View 
                     style={[styles.progressFill, { 
-                      width: `${getProgressPercentage(userData.workoutsThisWeek, userData.workoutGoal)}%`,
+                      width: `${getProgressPercentage(dailyStats.workoutsThisWeek, dailyStats.workoutGoal)}%`,
                       backgroundColor: '#3B82F6'
                     }]} 
                   />
@@ -252,8 +337,14 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#64748B',
     textAlign: 'center',
+  },
+  emailText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',

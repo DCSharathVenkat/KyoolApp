@@ -1,7 +1,7 @@
 // Simplified React Native SignUp Page
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SimpleGradient } from './ui/SimpleGradient';
 import { Ionicons } from '@expo/vector-icons';
 import { signUpWithEmail } from '../api/user_api';
 
@@ -50,13 +50,13 @@ export default function SignUpPage({ navigation }: SignUpPageProps) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <LinearGradient
+      <SimpleGradient
         colors={['#667eea', '#764ba2']}
         style={styles.header}
       >
         <Text style={styles.headerTitle}>Create Account</Text>
         <Text style={styles.headerSubtitle}>Join KyoolApp for personalized health tracking</Text>
-      </LinearGradient>
+      </SimpleGradient>
 
       <View style={styles.card}>
         <View style={styles.form}>

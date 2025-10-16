@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -15,34 +15,58 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { calculateBMI, calculateBMR, calculateTDEE } from '../utils/health';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { UserContext } from '../App';
+import { userAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
 interface ProfileProps {
-  user: any;
-  setUser?: (user: any) => void;
+  navigation?: any;
 }
 
-export function Profile({ user, setUser }: ProfileProps) {
+export function Profile({ navigation }: ProfileProps) {
+  const { user, userProfile, updateUserProfile } = useContext(UserContext);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Use Google Auth hook for sign out functionality
+  const { signOut } = useGoogleAuth();
+  
   const [editForm, setEditForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    height: user?.height?.toString() || '',
-    weight: user?.weight?.toString() || '',
-    age: user?.age?.toString() || '',
-    activityLevel: user?.activityLevel || 'moderately_active',
-    gender: user?.gender || 'male',
-    goal: user?.goal || 'Weight Management',
+    name: userProfile?.displayName || '',
+    email: userProfile?.email || '',
+    height: userProfile?.height?.toString() || '',
+    weight: userProfile?.weight?.toString() || '',
+    age: userProfile?.age?.toString() || '',
+    activityLevel: userProfile?.activityLevel || 'moderately_active',
+    gender: userProfile?.gender || 'male',
+    goal: userProfile?.goal || 'Weight Management',
   });
 
-  // Calculate health metrics
-  const height = user?.height || 180;
-  const weight = user?.weight || 75;
-  const age = user?.age || 35;
-  const gender = user?.gender || 'male';
-  const activityLevel = user?.activityLevel || 'moderately_active';
+  // Update form when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setEditForm({
+        name: userProfile.displayName || '',
+        email: userProfile.email || '',
+        height: userProfile.height?.toString() || '',
+        weight: userProfile.weight?.toString() || '',
+        age: userProfile.age?.toString() || '',
+        activityLevel: userProfile.activityLevel || 'moderately_active',
+        gender: userProfile.gender || 'male',
+        goal: userProfile.goal || 'Weight Management',
+      });
+    }
+  }, [userProfile]);
+
+  // Calculate health metrics from current profile
+  const height = userProfile?.height || 180;
+  const weight = userProfile?.weight || 75;
+  const age = userProfile?.age || 35;
+  const gender = userProfile?.gender || 'male';
+  const activityLevel = userProfile?.activityLevel || 'moderately_active';
 
   const bmi = calculateBMI(weight, height);
   const bmr = calculateBMR(weight, height, age, gender);
@@ -76,24 +100,66 @@ export function Profile({ user, setUser }: ProfileProps) {
     { title: 'App Version', icon: 'information-circle', value: '1.0.0', action: 'info' },
   ];
 
-  const handleSave = () => {
-    const updatedUser = {
-      ...user,
-      name: editForm.name,
-      email: editForm.email,
-      height: parseInt(editForm.height) || height,
-      weight: parseInt(editForm.weight) || weight,
-      age: parseInt(editForm.age) || age,
-      activityLevel: editForm.activityLevel,
-      gender: editForm.gender,
-      goal: editForm.goal,
-    };
-
-    if (setUser) {
-      setUser(updatedUser);
+  const handleSave = async () => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'Please sign in to update your profile');
+      return;
     }
-    setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully!');
+
+    setIsSaving(true);
+
+    try {
+      const updatedProfile = {
+        ...userProfile,
+        displayName: editForm.name,
+        height: parseInt(editForm.height) || height,
+        weight: parseInt(editForm.weight) || weight,
+        age: parseInt(editForm.age) || age,
+        activityLevel: editForm.activityLevel,
+        gender: editForm.gender,
+        goal: editForm.goal,
+        updatedAt: new Date().toISOString(),
+      };
+
+      console.log('💾 Saving profile:', updatedProfile.email);
+      
+      // Update profile in backend
+      await userAPI.updateProfile(user.uid, updatedProfile);
+      
+      // Update local state
+      updateUserProfile(updatedProfile);
+      
+      // Add weight log if weight changed
+      if (updatedProfile.weight !== userProfile?.weight && updatedProfile.weight && updatedProfile.height) {
+        const bmi = calculateBMI(updatedProfile.height, updatedProfile.weight);
+        const bmr = calculateBMR(updatedProfile.height, updatedProfile.weight, updatedProfile.age, updatedProfile.gender);
+        const tdee = calculateTDEE(bmr, updatedProfile.activityLevel);
+        
+        try {
+          await userAPI.addWeightLog(
+            user.uid,
+            updatedProfile.weight,
+            new Date().toISOString(),
+            bmi,
+            bmr,
+            tdee
+          );
+          console.log('✅ Weight log added successfully');
+        } catch (logError) {
+          console.warn('⚠️ Failed to add weight log:', logError);
+        }
+      }
+
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+      console.log('✅ Profile saved successfully');
+
+    } catch (error) {
+      console.error('❌ Failed to save profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSettingAction = (setting: any) => {
@@ -118,6 +184,56 @@ export function Profile({ user, setUser }: ProfileProps) {
     }
   };
 
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of your account?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🚪 Profile: Starting sign out process...');
+              const result = await signOut();
+              
+              if (result.success) {
+                console.log('✅ Profile: Sign out successful');
+                
+                // Clear user data (handled by UserContext in App.tsx)
+                console.log('👤 User profile cleared via auth state change');
+                
+                // Navigate back to login or home page and reset stack
+                if (navigation) {
+                  // Reset navigation stack and go to login - this prevents back navigation
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Home' }], // Reset to Home (Landing page)
+                  });
+                  
+                  // Show success message briefly
+                  Alert.alert('Success', 'You have been signed out successfully.');
+                } else {
+                  Alert.alert('Success', 'You have been signed out successfully.');
+                }
+              } else {
+                console.error('❌ Profile: Sign out failed:', result.error);
+                Alert.alert('Sign Out Failed', result.error || 'Failed to sign out. Please try again.');
+              }
+            } catch (error) {
+              console.error('❌ Profile: Sign out error:', error);
+              Alert.alert('Error', 'An unexpected error occurred while signing out.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getBMICategory = (bmi: number) => {
     if (bmi < 18.5) return { category: 'Underweight', color: '#74B9FF' };
     if (bmi < 25) return { category: 'Normal', color: '#00B894' };
@@ -137,13 +253,13 @@ export function Profile({ user, setUser }: ProfileProps) {
             style={styles.avatar}
           >
             <Text style={styles.avatarText}>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              {userProfile?.displayName?.charAt(0)?.toUpperCase() || userProfile?.email?.charAt(0)?.toUpperCase() || 'U'}
             </Text>
           </LinearGradient>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{user?.name || 'User'}</Text>
-          <Text style={styles.profileEmail}>{user?.email || 'user@example.com'}</Text>
+          <Text style={styles.profileName}>{userProfile?.displayName || userProfile?.email?.split('@')[0] || 'User'}</Text>
+          <Text style={styles.profileEmail}>{userProfile?.email || 'user@example.com'}</Text>
           <Text style={styles.profileGoal}>{editForm.goal}</Text>
         </View>
         <TouchableOpacity
@@ -282,7 +398,7 @@ export function Profile({ user, setUser }: ProfileProps) {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
         <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
         <Text style={styles.logoutText}>Sign Out</Text>
       </TouchableOpacity>
@@ -301,8 +417,10 @@ export function Profile({ user, setUser }: ProfileProps) {
             <Text style={styles.cancelButton}>Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Edit Profile</Text>
-          <TouchableOpacity onPress={handleSave}>
-            <Text style={styles.saveButton}>Save</Text>
+          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+            <Text style={[styles.saveButton, isSaving && { opacity: 0.6 }]}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Text>
           </TouchableOpacity>
         </View>
 
