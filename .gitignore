@@ -43,7 +43,7 @@ backend/keys/
 *.json.backup
 
 ##Expo
-frontend/.expo/
+frontend/.expo/devices.json
 .idea/
 
 ##Android Build Files
