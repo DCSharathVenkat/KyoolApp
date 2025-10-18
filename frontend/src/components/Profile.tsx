@@ -11,6 +11,7 @@ import {
   TextInput,
   Modal,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -30,6 +31,9 @@ export function Profile({ navigation }: ProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [backendUser, setBackendUser] = useState(null);
+  const [weightLogs, setWeightLogs] = useState([]);
   
   // Use Google Auth hook for sign out functionality
   const { signOut } = useGoogleAuth();
@@ -45,42 +49,76 @@ export function Profile({ navigation }: ProfileProps) {
     goal: userProfile?.goal || 'Weight Management',
   });
 
-  // Update form when userProfile changes
+  // Load backend data
   useEffect(() => {
-    if (userProfile) {
+    const loadProfileData = async () => {
+      if (!user?.uid) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        console.log('👤 Loading profile data for user:', user.uid);
+        
+        // Fetch user data from backend
+        const userData = await userAPI.getUser(user.uid);
+        console.log('✅ Backend user data:', userData);
+        setBackendUser(userData);
+        
+        // Fetch weight logs
+        const logs = await userAPI.getWeightLogs(user.uid);
+        console.log('📊 Weight logs loaded:', logs);
+        setWeightLogs(logs || []);
+        
+      } catch (err) {
+        console.error('❌ Failed to load profile data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [user?.uid]);
+
+  // Update form when userProfile or backendUser changes
+  useEffect(() => {
+    const profileData = userProfile || backendUser;
+    if (profileData) {
       setEditForm({
-        name: userProfile.displayName || '',
-        email: userProfile.email || '',
-        height: userProfile.height?.toString() || '',
-        weight: userProfile.weight?.toString() || '',
-        age: userProfile.age?.toString() || '',
-        activityLevel: userProfile.activityLevel || 'moderately_active',
-        gender: userProfile.gender || 'male',
-        goal: userProfile.goal || 'Weight Management',
+        name: profileData.displayName || profileData.name || '',
+        email: profileData.email || '',
+        height: (profileData.height || backendUser?.height)?.toString() || '',
+        weight: (profileData.weight || backendUser?.weight)?.toString() || '',
+        age: (profileData.age || backendUser?.age)?.toString() || '',
+        activityLevel: profileData.activityLevel || backendUser?.activity_level || 'moderately_active',
+        gender: profileData.gender || backendUser?.gender || 'male',
+        goal: profileData.goal || 'Weight Management',
       });
     }
-  }, [userProfile]);
+  }, [userProfile, backendUser]);
 
-  // Calculate health metrics from current profile
-  const height = userProfile?.height || 180;
-  const weight = userProfile?.weight || 75;
-  const age = userProfile?.age || 35;
-  const gender = userProfile?.gender || 'male';
-  const activityLevel = userProfile?.activityLevel || 'moderately_active';
+  // Calculate health metrics from current profile (use backend data if available)
+  const height = userProfile?.height || backendUser?.height || 180;
+  const weight = userProfile?.weight || backendUser?.weight || 75;
+  const age = userProfile?.age || backendUser?.age || 35;
+  const gender = userProfile?.gender || backendUser?.gender || 'male';
+  const activityLevel = userProfile?.activityLevel || backendUser?.activity_level || 'moderately_active';
 
   const bmi = calculateBMI(weight, height);
   const bmr = calculateBMR(weight, height, age, gender);
   const tdee = bmr ? calculateTDEE(bmr, activityLevel) : null;
 
-  // User stats (mock data)
+  // User stats (combine backend data with mock data)
   const userStats = {
-    joinDate: '2024-01-15',
-    totalWorkouts: 45,
-    totalRecipes: 23,
-    waterGoalsAchieved: 28,
-    currentStreak: 7,
-    followers: 156,
-    following: 89
+    joinDate: backendUser?.date_joined || userProfile?.createdAt || '2024-01-15',
+    totalWorkouts: 45, // TODO: Get from backend when available
+    totalRecipes: 23,   // TODO: Get from backend when available
+    waterGoalsAchieved: 28, // TODO: Calculate from water logs
+    currentStreak: 7,   // TODO: Calculate from activity data
+    weightLogs: weightLogs.length || 0,
+    followers: (backendUser?.friends?.length || 0),
+    following: (backendUser?.friends?.length || 0) // For now, same as friends
   };
 
   const achievements = [
@@ -243,6 +281,16 @@ export function Profile({ navigation }: ProfileProps) {
 
   const bmiInfo = getBMICategory(bmi);
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#667eea" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>Loading profile...</Text>
+      </View>
+    );
+  }
+
   const renderOverview = () => (
     <View style={styles.tabContent}>
       {/* Profile Header */}
@@ -258,9 +306,16 @@ export function Profile({ navigation }: ProfileProps) {
           </LinearGradient>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{userProfile?.displayName || userProfile?.email?.split('@')[0] || 'User'}</Text>
-          <Text style={styles.profileEmail}>{userProfile?.email || 'user@example.com'}</Text>
+          <Text style={styles.profileName}>
+            {userProfile?.displayName || backendUser?.name || userProfile?.email?.split('@')[0] || 'User'}
+          </Text>
+          <Text style={styles.profileEmail}>{userProfile?.email || backendUser?.email || 'user@example.com'}</Text>
           <Text style={styles.profileGoal}>{editForm.goal}</Text>
+          {backendUser?.date_joined && (
+            <Text style={styles.joinDate}>
+              Member since {new Date(backendUser.date_joined).toLocaleDateString()}
+            </Text>
+          )}
         </View>
         <TouchableOpacity
           style={styles.editButton}
@@ -316,19 +371,21 @@ export function Profile({ navigation }: ProfileProps) {
             <Text style={styles.statLabel}>Workouts</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="restaurant" size={24} color="#45B7D1" />
-            <Text style={styles.statValue}>{userStats.totalRecipes}</Text>
-            <Text style={styles.statLabel}>Recipes</Text>
+            <Ionicons name="analytics" size={24} color="#45B7D1" />
+            <Text style={styles.statValue}>{userStats.weightLogs}</Text>
+            <Text style={styles.statLabel}>Weight Logs</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="water" size={24} color="#96CEB4" />
-            <Text style={styles.statValue}>{userStats.waterGoalsAchieved}</Text>
-            <Text style={styles.statLabel}>Water Goals</Text>
+            <Ionicons name="people" size={24} color="#96CEB4" />
+            <Text style={styles.statValue}>{userStats.followers}</Text>
+            <Text style={styles.statLabel}>Friends</Text>
           </View>
           <View style={styles.statItem}>
-            <Ionicons name="flame" size={24} color="#FF6B6B" />
-            <Text style={styles.statValue}>{userStats.currentStreak}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
+            <Ionicons name="calendar" size={24} color="#FF6B6B" />
+            <Text style={styles.statValue}>
+              {Math.floor((new Date().getTime() - new Date(userStats.joinDate).getTime()) / (1000 * 60 * 60 * 24))}
+            </Text>
+            <Text style={styles.statLabel}>Days Active</Text>
           </View>
         </View>
       </View>
@@ -675,6 +732,11 @@ const styles = StyleSheet.create({
     color: '#667eea',
     marginTop: 4,
     fontWeight: '600',
+  },
+  joinDate: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
   },
   editButton: {
     padding: 8,

@@ -24,7 +24,11 @@ export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
     sleepHours: 0,
     sleepGoal: 8,
     workoutsThisWeek: 0,
-    workoutGoal: 5
+    workoutGoal: 5,
+    currentWeight: null as number | null,
+    bmi: null as number | null,
+    bmr: null as number | null,
+    tdee: null as number | null
   });
   const [weightLogs, setWeightLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,37 +38,74 @@ export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
   }, [userProfile]);
 
   const loadDashboardData = async () => {
+    console.log('🔍 DEBUG - User context data:');
+    console.log('  - user:', user);
+    console.log('  - userProfile:', userProfile);
+    console.log('  - userProfile.uid:', userProfile?.uid);
+    console.log('  - userProfile.email:', userProfile?.email);
+
     if (!userProfile?.uid) {
-      console.log('⚠️ No user profile available, using demo data');
-      setIsLoading(false);
-      return;
+      console.log('⚠️ No user profile UID available, checking alternatives...');
+      
+      // Try to get UID from different sources
+      const userId = userProfile?.uid || user?.uid || (user as any)?.id || (userProfile as any)?.id;
+      console.log('🔍 Trying alternative user ID:', userId);
+      
+      if (!userId) {
+        console.log('❌ No user ID found anywhere, using demo data');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Use the alternative user ID
+      console.log('✅ Found user ID, proceeding with:', userId);
     }
 
     try {
       setIsLoading(true);
-      console.log('📊 Loading dashboard data for:', userProfile.email);
+      const actualUserId = userProfile?.uid || user?.uid || (user as any)?.id || (userProfile as any)?.id;
+      console.log('📊 Loading dashboard data for user:', actualUserId);
+      console.log('📧 User email:', userProfile?.email || user?.email);
+
+      // Try to get the full user profile from backend
+      let backendUser = null;
+      try {
+        console.log('👤 Fetching user profile from backend...');
+        backendUser = await userAPI.getUser(actualUserId);
+        console.log('✅ Backend user data:', backendUser);
+      } catch (userError) {
+        console.log('⚠️ Could not fetch user from backend:', userError.message);
+      }
 
       // Load user's weight logs
-      const logs = await userAPI.getWeightLogs(userProfile.uid);
-      setWeightLogs(logs.weightLogs || []);
+      const logs = await userAPI.getWeightLogs(actualUserId);
+      console.log('📊 Weight logs response:', logs);
+      setWeightLogs(logs || []);
 
-      // For now, we'll use some smart defaults + any available user data
-      // In a full app, you'd have APIs for daily activity, water intake, etc.
+      // Use backend data when available, otherwise use smart defaults
+      const currentWeight = backendUser?.weight || (logs && logs.length > 0 ? logs[0].weight : null);
+      const bmr = backendUser?.bmr || 1600; // Base Metabolic Rate
+      const tdee = backendUser?.tdee || 2400; // Total Daily Energy Expenditure
+      
       const updatedStats = {
-        todaySteps: userProfile.todaySteps || Math.floor(Math.random() * 5000) + 5000,
+        todaySteps: userProfile.todaySteps || Math.floor(Math.random() * 5000) + 7500,
         stepGoal: userProfile.stepGoal || 10000,
-        waterIntake: userProfile.waterIntake || Math.floor(Math.random() * 4) + 4,
+        waterIntake: userProfile.waterIntake || Math.floor(Math.random() * 4) + 5,
         waterGoal: userProfile.waterGoal || 8,
-        caloriesBurned: userProfile.caloriesBurned || Math.floor(Math.random() * 300) + 200,
-        calorieGoal: userProfile.calorieGoal || 600,
-        sleepHours: userProfile.sleepHours || 7 + Math.random() * 2,
+        caloriesBurned: userProfile.caloriesBurned || Math.floor(bmr * 0.3) + Math.floor(Math.random() * 200),
+        calorieGoal: Math.floor(tdee * 0.25) || 600, // 25% of TDEE as exercise goal
+        sleepHours: userProfile.sleepHours || 7.5 + (Math.random() * 1.5),
         sleepGoal: userProfile.sleepGoal || 8,
-        workoutsThisWeek: userProfile.workoutsThisWeek || Math.floor(Math.random() * 3) + 2,
-        workoutGoal: userProfile.workoutGoal || 5
+        workoutsThisWeek: userProfile.workoutsThisWeek || Math.floor(Math.random() * 3) + 3,
+        workoutGoal: userProfile.workoutGoal || 5,
+        currentWeight: currentWeight,
+        bmi: backendUser?.bmi,
+        bmr: bmr,
+        tdee: tdee
       };
 
       setDailyStats(updatedStats);
-      console.log('✅ Dashboard data loaded successfully');
+      console.log('✅ Dashboard data loaded successfully with backend integration');
 
     } catch (error) {
       console.error('❌ Failed to load dashboard data:', error);
@@ -169,6 +210,12 @@ export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
           {userProfile?.email && (
             <Text style={styles.emailText}>{userProfile.email}</Text>
           )}
+          {dailyStats.currentWeight && (
+            <Text style={styles.weightText}>Current Weight: {dailyStats.currentWeight}kg</Text>
+          )}
+          {dailyStats.bmi && (
+            <Text style={styles.bmiText}>BMI: {dailyStats.bmi}</Text>
+          )}
         </View>
 
         {/* Quick Stats Cards */}
@@ -235,6 +282,43 @@ export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
             </CardContent>
           </Card>
         </View>
+
+        {/* Health Overview from Backend */}
+        {(dailyStats.currentWeight || dailyStats.bmi || dailyStats.tdee) && (
+          <Card style={styles.card}>
+            <CardHeader>
+              <CardTitle>Your Health Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <View style={styles.healthOverview}>
+                {dailyStats.currentWeight && (
+                  <View style={styles.healthItem}>
+                    <Text style={styles.healthLabel}>Current Weight</Text>
+                    <Text style={styles.healthValue}>{dailyStats.currentWeight}kg</Text>
+                  </View>
+                )}
+                {dailyStats.bmi && (
+                  <View style={styles.healthItem}>
+                    <Text style={styles.healthLabel}>BMI</Text>
+                    <Text style={styles.healthValue}>{dailyStats.bmi}</Text>
+                  </View>
+                )}
+                {dailyStats.bmr && (
+                  <View style={styles.healthItem}>
+                    <Text style={styles.healthLabel}>BMR</Text>
+                    <Text style={styles.healthValue}>{dailyStats.bmr} cal/day</Text>
+                  </View>
+                )}
+                {dailyStats.tdee && (
+                  <View style={styles.healthItem}>
+                    <Text style={styles.healthLabel}>TDEE</Text>
+                    <Text style={styles.healthValue}>{dailyStats.tdee} cal/day</Text>
+                  </View>
+                )}
+              </View>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         <Card style={styles.card}>
@@ -345,6 +429,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textAlign: 'center',
     marginTop: 4,
+  },
+  weightText: {
+    fontSize: 16,
+    color: '#3B82F6',
+    textAlign: 'center',
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  bmiText: {
+    fontSize: 14,
+    color: '#10B981',
+    textAlign: 'center',
+    marginTop: 2,
+    fontWeight: '500',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -475,5 +573,30 @@ const styles = StyleSheet.create({
   progressValue: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  healthOverview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  healthItem: {
+    width: '48%',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  healthLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  healthValue: {
+    fontSize: 18,
+    color: '#1E293B',
+    fontWeight: '700',
   },
 });

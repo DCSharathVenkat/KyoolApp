@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -7,19 +7,28 @@ import {
   StyleSheet, 
   Alert,
   Dimensions,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as HealthAPI from '../api/health_api';
+import { UserContext } from '../App';
+import { userAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
-export function WaterTracker() {
+interface WaterTrackerProps {
+  navigation?: any;
+}
+
+export function WaterTracker({ navigation }: WaterTrackerProps) {
+  const { user, userProfile } = useContext(UserContext);
   const [dailyGoal] = useState(8);
-  const [todayIntake, setTodayIntake] = useState(5);
+  const [todayIntake, setTodayIntake] = useState(0);
   const [glassSize] = useState(250);
   const [animatedValue] = useState(new Animated.Value(0));
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const weeklyData = [
     { day: 'Mon', intake: 7, goal: 8 },
@@ -39,6 +48,37 @@ export function WaterTracker() {
     { time: '21:00', message: 'Last glass before bed', completed: false },
   ];
 
+  // Load water intake data from backend
+  useEffect(() => {
+    const loadWaterData = async () => {
+      if (!user?.uid) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        console.log('💧 Loading water intake for user:', user.uid);
+        
+        // For now, use mock data since water API might not be fully implemented
+        // In future, this would be: const waterData = await userAPI.getTodayWaterIntake(user.uid);
+        
+        // Use a more realistic starting value
+        const mockIntake = 3; // Starting with 3 glasses
+        setTodayIntake(mockIntake);
+        console.log('💧 Water intake loaded:', mockIntake);
+        
+      } catch (err) {
+        console.error('❌ Failed to load water data:', err);
+        setTodayIntake(3); // Fallback value
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWaterData();
+  }, [user?.uid]);
+
   useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: (todayIntake / dailyGoal) * 100,
@@ -47,18 +87,74 @@ export function WaterTracker() {
     }).start();
   }, [todayIntake]);
 
-  const addWater = () => {
+  const addWater = async () => {
+    if (!user?.uid) {
+      Alert.alert('Sign In Required', 'Please sign in to track your water intake.');
+      return;
+    }
+
     if (todayIntake < 15) {
-      setTodayIntake(todayIntake + 1);
-      Alert.alert('Great!', `You've had ${todayIntake + 1} glasses today! 💧`);
+      setIsSaving(true);
+      try {
+        const newIntake = todayIntake + 1;
+        
+        // Update local state immediately for better UX
+        setTodayIntake(newIntake);
+        
+        // Try to save to backend (this might not be fully implemented yet)
+        try {
+          // await userAPI.logWaterIntake(user.uid, 1); // Log +1 glass
+          console.log('💧 Water logged (backend integration pending)');
+        } catch (backendError) {
+          console.log('⚠️ Backend water logging not available:', backendError);
+        }
+        
+        if (newIntake >= dailyGoal) {
+          Alert.alert('🎉 Goal Achieved!', `Congratulations! You've reached your daily water goal of ${dailyGoal} glasses!`);
+        } else {
+          Alert.alert('Great!', `You've had ${newIntake} glasses today! 💧 ${dailyGoal - newIntake} more to reach your goal.`);
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to add water:', error);
+        setTodayIntake(todayIntake); // Revert on error
+        Alert.alert('Error', 'Failed to log water intake. Please try again.');
+      } finally {
+        setIsSaving(false);
+      }
     } else {
       Alert.alert('Wow!', 'You\'ve had plenty of water today! 🎉');
     }
   };
 
-  const removeWater = () => {
+  const removeWater = async () => {
+    if (!user?.uid) {
+      Alert.alert('Sign In Required', 'Please sign in to track your water intake.');
+      return;
+    }
+
     if (todayIntake > 0) {
-      setTodayIntake(todayIntake - 1);
+      setIsSaving(true);
+      try {
+        const newIntake = todayIntake - 1;
+        
+        // Update local state immediately
+        setTodayIntake(newIntake);
+        
+        // Try to save to backend
+        try {
+          // await userAPI.setWaterIntake(user.uid, newIntake); // Set total glasses
+          console.log('💧 Water updated (backend integration pending)');
+        } catch (backendError) {
+          console.log('⚠️ Backend water logging not available:', backendError);
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to remove water:', error);
+        setTodayIntake(todayIntake); // Revert on error
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -77,6 +173,16 @@ export function WaterTracker() {
     if (percentage >= 50) return "👍 You're doing well, stay hydrated!";
     return "💧 Let's start hydrating! Your body will thank you.";
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#06b6d4" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>Loading water tracker...</Text>
+      </View>
+    );
+  }
 
   const StatCard = ({ title, value, subtitle, icon, color = '#3B82F6' }: any) => (
     <View style={[styles.statCard, { borderColor: color }]}>
@@ -144,12 +250,16 @@ export function WaterTracker() {
 
               <View style={styles.waterControls}>
                 <TouchableOpacity 
-                  style={[styles.waterButton, todayIntake === 0 && styles.waterButtonDisabled]}
+                  style={[styles.waterButton, (todayIntake === 0 || isSaving) && styles.waterButtonDisabled]}
                   onPress={removeWater}
-                  disabled={todayIntake === 0}
+                  disabled={todayIntake === 0 || isSaving}
                 >
-                  <Ionicons name="remove" size={24} color={todayIntake === 0 ? '#9CA3AF' : '#EF4444'} />
-                  <Text style={[styles.waterButtonText, todayIntake === 0 && styles.waterButtonTextDisabled]}>
+                  {isSaving ? (
+                    <ActivityIndicator size={20} color="#9CA3AF" />
+                  ) : (
+                    <Ionicons name="remove" size={24} color={todayIntake === 0 ? '#9CA3AF' : '#EF4444'} />
+                  )}
+                  <Text style={[styles.waterButtonText, (todayIntake === 0 || isSaving) && styles.waterButtonTextDisabled]}>
                     -{glassSize}ml
                   </Text>
                 </TouchableOpacity>
@@ -162,12 +272,16 @@ export function WaterTracker() {
                 </View>
                 
                 <TouchableOpacity 
-                  style={[styles.waterButton, todayIntake >= 15 && styles.waterButtonDisabled]}
+                  style={[styles.waterButton, (todayIntake >= 15 || isSaving) && styles.waterButtonDisabled]}
                   onPress={addWater}
-                  disabled={todayIntake >= 15}
+                  disabled={todayIntake >= 15 || isSaving}
                 >
-                  <Ionicons name="add" size={24} color={todayIntake >= 15 ? '#9CA3AF' : '#10B981'} />
-                  <Text style={[styles.waterButtonText, todayIntake >= 15 && styles.waterButtonTextDisabled]}>
+                  {isSaving ? (
+                    <ActivityIndicator size={20} color="#9CA3AF" />
+                  ) : (
+                    <Ionicons name="add" size={24} color={todayIntake >= 15 ? '#9CA3AF' : '#10B981'} />
+                  )}
+                  <Text style={[styles.waterButtonText, (todayIntake >= 15 || isSaving) && styles.waterButtonTextDisabled]}>
                     +{glassSize}ml
                   </Text>
                 </TouchableOpacity>

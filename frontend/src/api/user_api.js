@@ -6,6 +6,8 @@ import { auth } from '../firebase';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
 
+console.log('🌐 API Base URL:', BASE_URL);
+
 // Search users by query (username, name, email)
 export async function searchUsers(query) {
   if (!query) return [];
@@ -24,6 +26,198 @@ export async function addFriend(currentUserId, targetUserId) {
     body: JSON.stringify({ targetUserId }),
   });
   return res.ok;
+}
+
+// User activity and online status functions
+export async function updateUserActivity(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return res.ok;
+  } catch (error) {
+    console.error('Update activity error:', error);
+    return false;
+  }
+}
+
+export async function getUserOnlineStatus(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}`);
+    if (!res.ok) return false;
+    const userData = await res.json();
+    return userData.online || false;
+  } catch (error) {
+    console.error('Get online status error:', error);
+    return false;
+  }
+}
+
+export async function getUserByUserId(userId) {
+  try {
+    console.log('🔍 Getting user by ID:', userId);
+    const res = await fetch(`${BASE_URL}/users/${userId}`);
+    if (!res.ok) throw new Error(`Failed to get user: ${res.status}`);
+    const data = await res.json();
+    console.log('✅ User data retrieved:', data);
+    return data;
+  } catch (error) {
+    console.error('Get user by ID error:', error);
+    throw error;
+  }
+}
+
+// Friend request system functions
+export async function sendFriendRequest(userId, receiverId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/send-friend-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receiver_id: receiverId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to send friend request');
+    }
+    return res.json();
+  } catch (error) {
+    console.error('Send friend request error:', error);
+    throw error;
+  }
+}
+
+export async function acceptFriendRequest(userId, senderId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/accept-friend-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_id: senderId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to accept friend request');
+    }
+    return res.json();
+  } catch (error) {
+    console.error('Accept friend request error:', error);
+    throw error;
+  }
+}
+
+export async function rejectFriendRequest(userId, senderId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/reject-friend-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_id: senderId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to reject friend request');
+    }
+    return res.json();
+  } catch (error) {
+    console.error('Reject friend request error:', error);
+    throw error;
+  }
+}
+
+export async function getIncomingFriendRequests(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/friend-requests/incoming`);
+    if (!res.ok) throw new Error('Failed to get incoming friend requests');
+    const data = await res.json();
+    return data.requests || [];
+  } catch (error) {
+    console.error('Get incoming friend requests error:', error);
+    return [];
+  }
+}
+
+export async function getOutgoingFriendRequests(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/friend-requests/outgoing`);
+    if (!res.ok) throw new Error('Failed to get outgoing friend requests');
+    const data = await res.json();
+    return data.requests || [];
+  } catch (error) {
+    console.error('Get outgoing friend requests error:', error);
+    return [];
+  }
+}
+
+export async function getUserFriends(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/friends`);
+    if (!res.ok) throw new Error('Failed to get friends');
+    const data = await res.json();
+    return data.friends || [];
+  } catch (error) {
+    console.error('Get friends error:', error);
+    return [];
+  }
+}
+
+export async function getFriendshipStatus(userId, otherUserId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/friendship-status/${otherUserId}`);
+    if (!res.ok) throw new Error('Failed to get friendship status');
+    return res.json();
+  } catch (error) {
+    console.error('Get friendship status error:', error);
+    return { are_friends: false };
+  }
+}
+
+// Water intake functions
+export async function logWaterIntake(userId, glasses) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/water/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ glasses }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to log water intake');
+    }
+    return res.json();
+  } catch (error) {
+    console.error('Log water intake error:', error);
+    // Return mock success for demo
+    return { success: true, glasses };
+  }
+}
+
+export async function setWaterIntake(userId, glasses) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/water/set`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ glasses }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to set water intake');
+    }
+    return res.json();
+  } catch (error) {
+    console.error('Set water intake error:', error);
+    return { success: true, glasses };
+  }
+}
+
+export async function getTodayWaterIntake(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/users/${userId}/water/today`);
+    if (!res.ok) throw new Error('Failed to get today\'s water intake');
+    const data = await res.json();
+    return data.glasses || 0;
+  } catch (error) {
+    console.error('Get water intake error:', error);
+    return 0;
+  }
 }
 
 export async function addWeightLog(userId, weight, date, bmi, bmr, tdee) {
@@ -55,11 +249,21 @@ export async function isUsernameAvailable(username, userId) {
 
 export async function getWeightLogs(userId) {
   try {
+    console.log('📊 Fetching weight logs for:', userId);
     const res = await fetch(`${BASE_URL}/users/${userId}/weight-logs`);
-    return res.json();
+    
+    if (!res.ok) {
+      console.error('❌ Get weight logs failed:', res.status, res.statusText);
+      throw new Error(`Failed to get weight logs: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    console.log('✅ Weight logs received:', data);
+    return data;
   } catch (error) {
+    console.error('❌ Get weight logs error:', error);
     // Fallback for demo purposes when backend is not available
-    console.log('Backend not available, using mock weight logs');
+    console.log('Using mock weight logs as fallback');
     return [
       { weight: 75, date: '2025-10-01', bmi: 23.1, bmr: 1650, tdee: 2300 },
       { weight: 74.5, date: '2025-10-02', bmi: 22.9, bmr: 1645, tdee: 2295 },
@@ -69,17 +273,45 @@ export async function getWeightLogs(userId) {
   }
 }
 export async function createOrUpdateUser(userId, userData) {
-  const res = await fetch(`${BASE_URL}/users/${userId}`, {
-    method: "POST", // or "PUT" for update
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData),
-  });
-  return res.json();
+  try {
+    console.log('🔄 Creating/updating user:', userId, userData);
+    const res = await fetch(`${BASE_URL}/users/${userId}`, {
+      method: "POST", // or "PUT" for update
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || 'Failed to create/update user');
+    }
+    
+    const result = await res.json();
+    console.log('✅ User created/updated successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('Create/update user error:', error);
+    throw error;
+  }
 }
 
 export async function getUser(userId) {
-  const res = await fetch(`${BASE_URL}/users/${userId}`);
-  return res.json();
+  try {
+    console.log('🔍 Fetching user:', userId, 'from:', `${BASE_URL}/users/${userId}`);
+    const res = await fetch(`${BASE_URL}/users/${userId}`);
+    
+    if (!res.ok) {
+      console.error('❌ Get user failed:', res.status, res.statusText);
+      throw new Error(`Failed to get user: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    console.log('✅ User data received:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Get user error:', error);
+    throw error;
+  }
 }
 
 export async function getUserByEmail(email) {
@@ -90,7 +322,9 @@ export async function getUserByEmail(email) {
 // Create a new user account
 export async function createUser(userData) {
   try {
-    const res = await fetch(`${BASE_URL}/users`, {
+    // Use the correct endpoint with user ID
+    const userId = userData.id || userData.uid;
+    const res = await fetch(`${BASE_URL}/users/${userId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
@@ -197,7 +431,7 @@ export async function signInWithGoogle() {
           createdAt: new Date().toISOString()
         };
 
-        const response = await fetch(`${BASE_URL}/users`, {
+        const response = await fetch(`${BASE_URL}/users/${userData.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

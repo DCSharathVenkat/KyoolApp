@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -12,42 +12,32 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { addWeightLog, getWeightLogs } from '../api/user_api';
+import { userAPI } from '../services/api';
 import { calculateBMI, calculateBMR, calculateTDEE } from '../utils/health';
+import { UserContext } from '../App';
 
 const { width } = Dimensions.get('window');
 
 interface HealthMetricsProps {
-  user: any;
-  setUser: (user: any) => void;
+  navigation?: any;
 }
 
-export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
-  // Mock data for demonstration when no real data exists
-  const mockWeightLogs = [
-    { weight: 72, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 71.5, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 71.8, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 71.2, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 70.9, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 70.5, date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
-    { weight: 70.2, date: new Date().toISOString() },
-  ];
-
-  const [weightLogs, setWeightLogs] = useState(mockWeightLogs);
+export function HealthMetrics({ navigation }: HealthMetricsProps) {
+  const { user, userProfile, updateUserProfile } = useContext(UserContext);
   
-  // Ensure we always have data for demo
-  const displayLogs = weightLogs.length > 0 ? weightLogs : mockWeightLogs;
+  const [weightLogs, setWeightLogs] = useState([]);
+  const [backendUser, setBackendUser] = useState(null);
   const [metrics, setMetrics] = useState({
-    height: user?.height || 170,
-    weight: user?.weight || 70,
-    age: user?.age || 25,
+    height: userProfile?.height || 170,
+    weight: userProfile?.weight || 70,
+    age: userProfile?.age || 25,
     bodyFat: 15,
     restingHeartRate: 65,
     bloodPressureSystolic: 120,
     bloodPressureDiastolic: 80
   });
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const getBMICategory = (bmi: number) => {
@@ -75,38 +65,92 @@ export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
 
 
   useEffect(() => {
-    async function fetchLogs() {
-      if (user?.id) {
-        try {
-          const logs = await getWeightLogs(user.id);
-          setWeightLogs(logs);
-        } catch (err) {
-          setError('Failed to fetch weight logs');
-        }
+    const loadHealthData = async () => {
+      if (!user?.uid) {
+        setIsLoading(false);
+        return;
       }
+
+      try {
+        setIsLoading(true);
+        console.log('📊 Loading health data for user:', user.uid);
+        
+        // Fetch user data from backend
+        const userData = await userAPI.getUser(user.uid);
+        console.log('✅ Backend user data:', userData);
+        setBackendUser(userData);
+        
+        // Update metrics with backend data
+        setMetrics(prev => ({
+          ...prev,
+          height: userData.height || prev.height,
+          weight: userData.weight || prev.weight,
+          age: userData.age || prev.age,
+        }));
+        
+        // Fetch weight logs
+        const logs = await userAPI.getWeightLogs(user.uid);
+        console.log('📊 Weight logs loaded:', logs);
+        setWeightLogs(logs || []);
+        
+      } catch (err) {
+        console.error('❌ Failed to load health data:', err);
+        setError('Failed to load health data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadHealthData();
+  }, [user?.uid]);
+
+  // Update metrics when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setMetrics(prev => ({
+        ...prev,
+        height: userProfile.height || prev.height,
+        weight: userProfile.weight || prev.weight,
+        age: userProfile.age || prev.age,
+      }));
     }
-    fetchLogs();
-  }, [user?.id]);
+  }, [userProfile]);
 
   const handleSave = async () => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'Please sign in to save your metrics');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      setUser({
-        ...user,
+      console.log('💾 Saving health metrics...');
+      
+      // Update user profile with new metrics
+      const updatedProfile = {
+        ...userProfile,
         height: metrics.height,
         weight: metrics.weight,
-        age: metrics.age
-      });
+        age: metrics.age,
+        updatedAt: new Date().toISOString()
+      };
       
-      if (user?.id) {
+      // Update profile in backend
+      await userAPI.updateProfile(user.uid, updatedProfile);
+      
+      // Update local context
+      updateUserProfile(updatedProfile);
+      
+      // Add weight log if weight changed
+      if (metrics.weight !== userProfile?.weight) {
         const now = new Date().toISOString();
         const bmi = calculateBMI(metrics.weight, metrics.height);
-        const bmr = calculateBMR(metrics.weight, metrics.height, metrics.age, user.gender);
-        const tdee = calculateTDEE(bmr ?? 0, user.activityLevel);
+        const bmr = calculateBMR(metrics.weight, metrics.height, metrics.age, userProfile?.gender || 'male');
+        const tdee = calculateTDEE(bmr ?? 0, userProfile?.activityLevel || 'moderately_active');
         
-        await addWeightLog(
-          user.id,
+        await userAPI.addWeightLog(
+          user.uid,
           metrics.weight,
           now,
           bmi,
@@ -114,23 +158,41 @@ export function HealthMetrics({ user, setUser }: HealthMetricsProps) {
           tdee
         );
         
-        const updatedLogs = await getWeightLogs(user.id);
+        // Refresh weight logs
+        const updatedLogs = await userAPI.getWeightLogs(user.uid);
         setWeightLogs(updatedLogs);
-        Alert.alert('Success', 'Metrics saved successfully!');
       }
+      
+      Alert.alert('Success', 'Metrics saved successfully!');
+      console.log('✅ Health metrics saved successfully');
+      
     } catch (err) {
+      console.error('❌ Failed to save metrics:', err);
       setError('Failed to save changes');
-      Alert.alert('Error', 'Failed to save changes');
+      Alert.alert('Error', 'Failed to save changes. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Ensure we always have data for demo - use backend data when available
+  const displayLogs = weightLogs.length > 0 ? weightLogs : [];
+  
   const bmi = calculateBMI(metrics.weight, metrics.height);
   const bmiCategory = getBMICategory(bmi ?? 0);
-  const bodyFatCategory = getBodyFatCategory(metrics.bodyFat, user?.gender);
-  const bmr = calculateBMR(metrics.weight, metrics.height, metrics.age, user?.gender);
-  const tdee = calculateTDEE(bmr ?? 0, user?.activityLevel);
+  const bodyFatCategory = getBodyFatCategory(metrics.bodyFat, userProfile?.gender || backendUser?.gender || 'male');
+  const bmr = calculateBMR(metrics.weight, metrics.height, metrics.age, userProfile?.gender || backendUser?.gender || 'male');
+  const tdee = calculateTDEE(bmr ?? 0, userProfile?.activityLevel || backendUser?.activity_level || 'moderately_active');
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#667eea" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>Loading health data...</Text>
+      </View>
+    );
+  }
 
   const MetricCard = ({ title, value, subtitle, icon, color = '#6366F1' }: any) => (
     <View style={[styles.metricCard, { borderColor: color }]}>

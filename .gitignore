@@ -45,6 +45,7 @@ backend/keys/
 ##Expo
 frontend/.expo/devices.json
 .idea/
+.expo/
 
 ##Android Build Files
 frontend/android/.gradle/
@@ -60,3 +61,5 @@ frontend/android/app/google-services.json
 
 .expo/
 code.txt
+
+/original
