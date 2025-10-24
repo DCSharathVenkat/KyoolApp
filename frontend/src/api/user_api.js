@@ -3,6 +3,7 @@
 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../firebase';
+import { apiRequest, USE_REAL_DATA, FALLBACK_TO_MOCK } from './api_config';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
 

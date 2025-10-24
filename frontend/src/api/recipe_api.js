@@ -1,4 +1,6 @@
 // Recipe API service for Kyool App
+import { apiRequest, USE_REAL_DATA, FALLBACK_TO_MOCK } from './api_config';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
 
 // Mock recipe data for now since backend recipe API is minimal
@@ -269,25 +271,30 @@ const RECIPE_CATEGORIES = [
 
 // Get all recipes with optional filtering
 export async function getRecipes(options = {}) {
-  try {
-    // Try to fetch from backend first
-    const response = await fetch(`${BASE_URL}/recipes`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.recipes || MOCK_RECIPES;
-    }
-  } catch (error) {
-    console.log('Backend not available, using mock recipes');
+  const result = await apiRequest('/recipes');
+  
+  if (result.success) {
+    // Apply filtering to real data
+    let recipes = result.data.recipes || result.data;
+    return applyRecipeFilters(recipes, options);
   }
+  
+  if (!FALLBACK_TO_MOCK) {
+    throw new Error('Real-time recipe data unavailable');
+  }
+  
+  console.log('📱 Using mock recipes as fallback');
+  return applyRecipeFilters(MOCK_RECIPES, options);
+}
 
-  // Apply client-side filtering to mock data
-  let filteredRecipes = [...MOCK_RECIPES];
+// Helper function to apply filters
+function applyRecipeFilters(recipes, options) {
+  let filteredRecipes = [...recipes];
 
   if (options.category && options.category !== 'all') {
     filteredRecipes = filteredRecipes.filter(recipe => 
       recipe.category === options.category || 
-      recipe.tags.includes(options.category)
+      recipe.tags?.includes(options.category)
     );
   }
 
@@ -295,8 +302,8 @@ export async function getRecipes(options = {}) {
     const searchLower = options.search.toLowerCase();
     filteredRecipes = filteredRecipes.filter(recipe =>
       recipe.name.toLowerCase().includes(searchLower) ||
-      recipe.ingredients.some(ing => ing.toLowerCase().includes(searchLower)) ||
-      recipe.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      recipe.ingredients?.some(ing => ing.toLowerCase().includes(searchLower)) ||
+      recipe.tags?.some(tag => tag.toLowerCase().includes(searchLower))
     );
   }
 
@@ -310,12 +317,12 @@ export async function getRecipes(options = {}) {
 
   if (options.dietary) {
     filteredRecipes = filteredRecipes.filter(recipe =>
-      recipe.dietaryRestrictions.includes(options.dietary)
+      recipe.dietaryRestrictions?.includes(options.dietary)
     );
   }
 
   // Sort by rating by default
-  filteredRecipes.sort((a, b) => b.rating - a.rating);
+  filteredRecipes.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
   return filteredRecipes.slice(0, options.limit || 50);
 }

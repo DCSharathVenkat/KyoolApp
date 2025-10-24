@@ -1,4 +1,6 @@
 // Health and Device Integration API service for Kyool App
+import { apiRequest, USE_REAL_DATA, FALLBACK_TO_MOCK } from './api_config';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
 
 // Mock health data since backend health API needs to be implemented
@@ -211,19 +213,22 @@ export async function syncDevice(userId, deviceId) {
 
 // Get comprehensive health data for a user
 export async function getHealthData(userId, dataTypes = [], timeframe = '7d') {
-  try {
-    const params = new URLSearchParams();
-    if (dataTypes.length > 0) params.append('types', dataTypes.join(','));
-    params.append('timeframe', timeframe);
-    
-    const response = await fetch(`${BASE_URL}/users/${userId}/health-data?${params.toString()}`);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.log('Backend not available, using mock health data');
+  const params = new URLSearchParams();
+  if (dataTypes.length > 0) params.append('types', dataTypes.join(','));
+  params.append('timeframe', timeframe);
+  
+  const endpoint = `/users/${userId}/health-data?${params.toString()}`;
+  const result = await apiRequest(endpoint);
+  
+  if (result.success) {
+    return result.data;
   }
-
+  
+  if (!FALLBACK_TO_MOCK) {
+    throw new Error('Real-time health data unavailable');
+  }
+  
+  console.log('📱 Using mock health data as fallback');
   return MOCK_HEALTH_DATA[userId] || MOCK_HEALTH_DATA['demo-user-123'];
 }
 

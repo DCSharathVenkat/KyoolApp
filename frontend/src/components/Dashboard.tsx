@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { UserContext } from '../App';
 import { userAPI } from '../services/api';
+import { ApiStatusIndicator } from './ApiStatusIndicator';
 
 interface DashboardProps {
   navigation?: any;
@@ -203,6 +204,9 @@ export function Dashboard({ navigation, onStartWorkout }: DashboardProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* API Status Indicator */}
+        <ApiStatusIndicator />
+        
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Welcome back, {userName}!</Text>

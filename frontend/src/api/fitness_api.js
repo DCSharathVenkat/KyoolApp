@@ -1,4 +1,6 @@
 // Fitness and Workout API service for Kyool App
+import { apiRequest, USE_REAL_DATA, FALLBACK_TO_MOCK } from './api_config';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kyool-backend-606917950237.us-central1.run.app';
 
 // Mock workout data since backend fitness API needs to be implemented
@@ -131,17 +133,18 @@ const MOCK_WORKOUT_LOGS = [
 
 // Get all available workouts
 export async function getWorkouts(category = null) {
-  try {
-    const url = category ? `${BASE_URL}/workouts?category=${category}` : `${BASE_URL}/workouts`;
-    const response = await fetch(url);
-    
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.log('Backend not available, using mock workouts');
+  const endpoint = category ? `/workouts?category=${category}` : '/workouts';
+  const result = await apiRequest(endpoint);
+  
+  if (result.success) {
+    return result.data;
   }
-
+  
+  if (!FALLBACK_TO_MOCK) {
+    throw new Error('Real-time workout data unavailable');
+  }
+  
+  console.log('📱 Using mock workouts as fallback');
   // Filter mock data by category if provided
   let workouts = [...MOCK_WORKOUTS];
   if (category && category !== 'all') {
